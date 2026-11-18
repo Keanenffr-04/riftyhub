@@ -1,17 +1,21 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useUserData } from '../components/UserLayout'
 import ProfileCard from '../components/ProfileCard'
+import RecentCommits from '../components/RecentCommits'
 import { RepoCard } from '../components/RepoViews'
+import { computeAnalytics } from '../utils/analytics'
 import { formatNumber } from '../utils/format'
 
 export default function OverviewPage() {
-  const { user, repos } = useUserData()
-  const recent = [...repos]
-    .sort((a, b) => Date.parse(b.pushed_at ?? b.updated_at) - Date.parse(a.pushed_at ?? a.updated_at))
-    .slice(0, 6)
+  const { user, repos, refresh } = useUserData()
+  const analytics = useMemo(() => computeAnalytics(repos), [repos])
+  const recent = repos.slice(0, 6) // API already returns most recently pushed first
 
   const stats = [
     { label: 'Public repositories', value: user.public_repos },
+    { label: 'Total stars', value: analytics.totalStars },
+    { label: 'Total forks', value: analytics.totalForks },
     { label: 'Followers', value: user.followers },
     { label: 'Following', value: user.following },
     { label: 'Public gists', value: user.public_gists },
@@ -19,16 +23,24 @@ export default function OverviewPage() {
 
   return (
     <div className="stack">
-      <ProfileCard user={user} />
+      <ProfileCard user={user} onRefresh={refresh} />
 
-      <section className="stats" aria-label="Profile statistics">
-        {stats.map((s) => (
-          <div key={s.label} className="card stat-tile">
-            <span className="stat-value">{formatNumber(s.value)}</span>
-            <span className="stat-label">{s.label}</span>
-          </div>
-        ))}
+      <section aria-label="Profile statistics">
+        <div className="stats">
+          {stats.map((s) => (
+            <div key={s.label} className="card stat-tile">
+              <span className="stat-value">{formatNumber(s.value)}</span>
+              <span className="stat-label">{s.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="muted small note">
+          Stars and forks are totals across the {repos.length} loaded repositories.{' '}
+          <Link to="analytics">See full analytics</Link>
+        </p>
       </section>
+
+      <RecentCommits username={user.login} />
 
       <section aria-labelledby="recent-heading">
         <div className="section-head">

@@ -38,3 +38,22 @@ export interface UserData {
   user: GitHubUser
   repos: GitHubRepo[]
 }
+
+export interface UserContext extends UserData {
+  refresh: () => void
+}
+
+export interface GitHubCommit {
+  sha: string
+  message: string
+  url: string
+  date: string
+  repo: string
+}
+
+export interface SavedProfile {
+  login: string
+  name: string | null
+  avatar_url: string
+  savedAt: string
+}

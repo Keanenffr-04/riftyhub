@@ -30,7 +30,7 @@ export function normalizeUrl(url: string): string {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
-const LANGUAGE_COLORS: Record<string, string> = {
+export const LANGUAGE_COLORS: Record<string, string> = {
   TypeScript: '#3178c6',
   JavaScript: '#f1e05a',
   Python: '#3572a5',

@@ -1,8 +1,12 @@
-import { Building2, Calendar, ExternalLink, Link2, MapPin, Users } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Building2, Calendar, ExternalLink, Link2, MapPin, RefreshCw, Users } from 'lucide-react'
 import type { GitHubUser } from '../types/github'
+import { useSavedProfiles } from '../hooks/useSavedProfiles'
 import { formatCompact, formatDate, normalizeUrl } from '../utils/format'
 
-export default function ProfileCard({ user }: { user: GitHubUser }) {
+export default function ProfileCard({ user, onRefresh }: { user: GitHubUser; onRefresh: () => void }) {
+  const { isSaved, toggle } = useSavedProfiles()
+  const saved = isSaved(user.login)
+
   return (
     <section className="card profile" aria-label="Profile">
       <img className="avatar" src={user.avatar_url} alt={`${user.login}'s avatar`} width={96} height={96} />
@@ -41,6 +45,14 @@ export default function ProfileCard({ user }: { user: GitHubUser }) {
             <Calendar size={14} aria-hidden="true" /> Joined {formatDate(user.created_at)}
           </li>
         </ul>
+        <div className="profile-actions">
+          <button className={`btn${saved ? ' btn-saved' : ''}`} onClick={() => toggle(user)} aria-pressed={saved}>
+            {saved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />} {saved ? 'Saved' : 'Save profile'}
+          </button>
+          <button className="btn" onClick={onRefresh}>
+            <RefreshCw size={15} /> Refresh data
+          </button>
+        </div>
       </div>
     </section>
   )

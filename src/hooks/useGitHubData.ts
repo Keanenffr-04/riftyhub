@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { GitHubError, getRepos, getUser, isValidUsername } from '../services/github'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { GitHubError, getRepos, getUser, isValidUsername, toGitHubError } from '../services/github'
 import type { UserData } from '../types/github'
 
 export type LoadState =
@@ -10,6 +10,7 @@ export type LoadState =
 export function useGitHubData(username: string) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
+  const forceRef = useRef(false)
 
   useEffect(() => {
     if (!isValidUsername(username)) {
@@ -17,22 +18,29 @@ export function useGitHubData(username: string) {
       return
     }
 
-    const controller = new AbortController()
+    let cancelled = false
+    const force = forceRef.current
+    forceRef.current = false
     setState({ status: 'loading' })
 
-    Promise.all([getUser(username, controller.signal), getRepos(username, controller.signal)])
+    Promise.all([getUser(username, force), getRepos(username, force)])
       .then(([user, repos]) => {
-        if (!controller.signal.aborted) setState({ status: 'success', data: { user, repos } })
+        if (!cancelled) setState({ status: 'success', data: { user, repos } })
       })
       .catch((err: unknown) => {
-        if (controller.signal.aborted) return
-        const error = err instanceof GitHubError ? err : new GitHubError('unknown', 'Something went wrong.')
-        setState({ status: 'error', error })
+        if (!cancelled) setState({ status: 'error', error: toGitHubError(err) })
       })
 
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+    }
   }, [username, attempt])
 
-  const retry = useCallback(() => setAttempt((n) => n + 1), [])
+  /** Re-fetches from GitHub, bypassing the cache. */
+  const retry = useCallback(() => {
+    forceRef.current = true
+    setAttempt((n) => n + 1)
+  }, [])
+
   return { state, retry }
 }

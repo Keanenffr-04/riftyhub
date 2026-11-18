@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart3, Bookmark, FolderGit2, GitCompare, LayoutDashboard, Home, X } from 'lucide-react'
+import { BarChart3, Bookmark, FolderGit2, GitCompare, Home, LayoutDashboard, X } from 'lucide-react'
 import Logo from './Logo'
+import RateLimitMeter from './RateLimitMeter'
+import { useSavedProfiles } from '../hooks/useSavedProfiles'
 
 interface Props {
   username: string | null
@@ -8,15 +10,16 @@ interface Props {
   onClose: () => void
 }
 
-const upcoming = [
-  { label: 'Analytics', icon: BarChart3 },
-  { label: 'Compare', icon: GitCompare },
-  { label: 'Saved profiles', icon: Bookmark },
-]
-
 export default function Sidebar({ username, open, onClose }: Props) {
+  const { profiles } = useSavedProfiles()
   const base = username ? `/u/${encodeURIComponent(username)}` : null
   const linkClass = ({ isActive }: { isActive: boolean }) => `nav-link${isActive ? ' active' : ''}`
+
+  const userLinks = [
+    { to: base, label: 'Overview', icon: LayoutDashboard, end: true },
+    { to: base && `${base}/repos`, label: 'Repositories', icon: FolderGit2, end: false },
+    { to: base && `${base}/analytics`, label: 'Analytics', icon: BarChart3, end: false },
+  ]
 
   return (
     <aside id="sidebar" className={`sidebar${open ? ' open' : ''}`} aria-label="Primary">
@@ -33,37 +36,32 @@ export default function Sidebar({ username, open, onClose }: Props) {
         <NavLink to="/" end className={linkClass} onClick={onClose}>
           <Home size={17} /> Home
         </NavLink>
-        {base ? (
-          <>
-            <NavLink to={base} end className={linkClass} onClick={onClose}>
-              <LayoutDashboard size={17} /> Overview
+
+        {userLinks.map(({ to, label, icon: Icon, end }) =>
+          to ? (
+            <NavLink key={label} to={to} end={end} className={linkClass} onClick={onClose}>
+              <Icon size={17} /> {label}
             </NavLink>
-            <NavLink to={`${base}/repos`} className={linkClass} onClick={onClose}>
-              <FolderGit2 size={17} /> Repositories
-            </NavLink>
-          </>
-        ) : (
-          <>
-            <span className="nav-link disabled" aria-disabled="true">
-              <LayoutDashboard size={17} /> Overview
+          ) : (
+            <span key={label} className="nav-link disabled" aria-disabled="true">
+              <Icon size={17} /> {label}
             </span>
-            <span className="nav-link disabled" aria-disabled="true">
-              <FolderGit2 size={17} /> Repositories
-            </span>
-          </>
+          ),
         )}
 
-        <p className="nav-group">Coming next</p>
-        {upcoming.map(({ label, icon: Icon }) => (
-          <span key={label} className="nav-link disabled" aria-disabled="true">
-            <Icon size={17} /> {label}
-          </span>
-        ))}
+        <p className="nav-group">Tools</p>
+        <NavLink to="/compare" className={linkClass} onClick={onClose}>
+          <GitCompare size={17} /> Compare
+        </NavLink>
+        <NavLink to="/saved" className={linkClass} onClick={onClose}>
+          <Bookmark size={17} /> Saved profiles
+          {profiles.length > 0 && <span className="badge">{profiles.length}</span>}
+        </NavLink>
       </nav>
 
-      <p className="sidebar-foot">
-        Live data from the public GitHub REST API. Without a token, GitHub allows 60 requests per hour.
-      </p>
+      <div className="sidebar-foot">
+        <RateLimitMeter />
+      </div>
     </aside>
   )
 }
