@@ -1,0 +1,82 @@
+import { ExternalLink, GitFork, Star } from 'lucide-react'
+import type { GitHubRepo } from '../types/github'
+import { formatCompact, languageColor, timeAgo } from '../utils/format'
+
+function Language({ language }: { language: string | null }) {
+  if (!language) return <span className="muted">—</span>
+  return (
+    <span className="lang">
+      <i style={{ background: languageColor(language) }} aria-hidden="true" />
+      {language}
+    </span>
+  )
+}
+
+export function RepoCard({ repo }: { repo: GitHubRepo }) {
+  return (
+    <article className="card repo-card">
+      <header>
+        <a className="repo-name" href={repo.html_url} target="_blank" rel="noopener noreferrer">
+          {repo.name} <ExternalLink size={13} aria-hidden="true" />
+        </a>
+        {repo.fork && <span className="tag">Fork</span>}
+        {repo.archived && <span className="tag">Archived</span>}
+      </header>
+      <p className={`repo-desc${repo.description ? '' : ' muted'}`}>{repo.description ?? 'No description provided.'}</p>
+      <footer>
+        <Language language={repo.language} />
+        <span className="stat" title="Stars">
+          <Star size={14} aria-hidden="true" /> {formatCompact(repo.stargazers_count)}
+          <span className="sr-only"> stars</span>
+        </span>
+        <span className="stat" title="Forks">
+          <GitFork size={14} aria-hidden="true" /> {formatCompact(repo.forks_count)}
+          <span className="sr-only"> forks</span>
+        </span>
+        <span className="muted updated">Updated {timeAgo(repo.pushed_at ?? repo.updated_at)}</span>
+      </footer>
+    </article>
+  )
+}
+
+export function RepoTable({ repos }: { repos: GitHubRepo[] }) {
+  return (
+    <div className="card table-wrap">
+      <table className="repo-table">
+        <thead>
+          <tr>
+            <th scope="col">Repository</th>
+            <th scope="col">Language</th>
+            <th scope="col" className="num">
+              Stars
+            </th>
+            <th scope="col" className="num">
+              Forks
+            </th>
+            <th scope="col">Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {repos.map((repo) => (
+            <tr key={repo.id}>
+              <td>
+                <a className="repo-name" href={repo.html_url} target="_blank" rel="noopener noreferrer">
+                  {repo.name}
+                </a>
+                {repo.fork && <span className="tag">Fork</span>}
+                {repo.archived && <span className="tag">Archived</span>}
+                {repo.description && <div className="table-desc">{repo.description}</div>}
+              </td>
+              <td>
+                <Language language={repo.language} />
+              </td>
+              <td className="num">{formatCompact(repo.stargazers_count)}</td>
+              <td className="num">{formatCompact(repo.forks_count)}</td>
+              <td className="muted nowrap">{timeAgo(repo.pushed_at ?? repo.updated_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
