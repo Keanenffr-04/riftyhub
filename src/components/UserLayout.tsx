@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useOutletContext, useParams } from 'react-router-dom'
 import { useGitHubData } from '../hooks/useGitHubData'
 import { ErrorState, PageSkeleton } from './States'
+import UserTabs from './UserTabs'
 import type { UserContext } from '../types/github'
 
 export default function UserLayout() {
@@ -18,7 +19,12 @@ export default function UserLayout() {
   if (state.status === 'loading') return <PageSkeleton />
   if (state.status === 'error') return <ErrorState error={state.error} username={username} onRetry={retry} />
   const context: UserContext = { ...state.data, refresh: retry }
-  return <Outlet context={context} />
+  return (
+    <div className="user-page">
+      <UserTabs username={username} user={state.data.user} repoCount={state.data.repos.length} />
+      <Outlet context={context} />
+    </div>
+  )
 }
 
 export function useUserData() {

@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.0.0 – Dashboard UI and repository explorer
+- Dashboard UI: profile tab bar on every profile page (Overview / Repositories / Analytics) with a compact identity header on inner pages; Overview stat tiles now have icons; new "Top languages" and "Most starred" panels built from the loaded repositories
+- Repository explorer: search now matches name, description, language and topics (every word must match); new filters for topic, license, minimum stars and last-pushed window; new sort options (date created, open issues) with an ascending/descending toggle; topic pills on cards filter on click; removable filter chips and "Clear all"
+- Filter and sort state is stored in the URL (shareable, bookmarkable); invalid URL values fall back to defaults
+- Kept from v2: text/language filters, hide forks/archived, cards/table layouts
+- Types: `created_at` and `topics` added to the repository type (both already returned by the GitHub API); no new dependencies
+- Adapted from roadmap: filtering/sorting basics already existed, so v5 extends them instead of rebuilding them
+
 ## v4.0.0 – Workflow
 - Process: every version now ships with a ready-to-paste, professional git commit message
 - No code or README changes

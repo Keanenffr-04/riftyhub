@@ -12,7 +12,10 @@ function Language({ language }: { language: string | null }) {
   )
 }
 
-export function RepoCard({ repo }: { repo: GitHubRepo }) {
+const MAX_TOPICS = 4
+
+export function RepoCard({ repo, onTopic }: { repo: GitHubRepo; onTopic?: (topic: string) => void }) {
+  const topics = onTopic ? (repo.topics ?? []).slice(0, MAX_TOPICS) : []
   return (
     <article className="card repo-card">
       <header>
@@ -23,6 +26,15 @@ export function RepoCard({ repo }: { repo: GitHubRepo }) {
         {repo.archived && <span className="tag">Archived</span>}
       </header>
       <p className={`repo-desc${repo.description ? '' : ' muted'}`}>{repo.description ?? 'No description provided.'}</p>
+      {topics.length > 0 && (
+        <div className="topics">
+          {topics.map((t) => (
+            <button key={t} type="button" className="topic" onClick={() => onTopic?.(t)} title={`Filter by topic: ${t}`}>
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
       <footer>
         <Language language={repo.language} />
         <span className="stat" title="Stars">

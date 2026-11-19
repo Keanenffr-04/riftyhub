@@ -28,8 +28,10 @@ export interface GitHubRepo {
   stargazers_count: number
   forks_count: number
   open_issues_count: number
+  created_at: string
   updated_at: string
   pushed_at: string | null
+  topics?: string[]
   homepage: string | null
   license: { name: string; spdx_id: string } | null
 }

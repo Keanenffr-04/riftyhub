@@ -37,8 +37,10 @@ npm run preview
 ```
 
 ## Features
-- Profile, stats and recent commits
-- Repository filtering and sorting
+- Profile dashboard: stat tiles, top languages, most starred and recent commits
+- Profile tabs (Overview, Repositories, Analytics) for quick navigation
+- Repository explorer: multi-word search (name, description, language, topics), filters for language, topic, license, minimum stars and last push date, hide forks/archived, six sort options with a reverse toggle, removable filter chips
+- Filters are stored in the URL, so a filtered view can be bookmarked or shared
 - Analytics: stars, forks, languages, charts
 - Developer comparison
 - Saved profiles (browser storage)
@@ -57,7 +59,7 @@ src/
   services/     GitHub API client, cache, rate-limit tracking
   styles/       Design tokens and global styles
   types/        GitHub API types
-  utils/        Formatting and analytics helpers
+  utils/        Formatting, analytics and repository filter helpers
 ```
 
 See `CHANGELOG.md` for version history.

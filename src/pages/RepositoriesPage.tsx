@@ -1,57 +1,70 @@
 import { useMemo, useState } from 'react'
-import { LayoutGrid, List, Search } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { ArrowDown, ArrowUp, LayoutGrid, List, Search, X } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
 import { RepoCard, RepoTable } from '../components/RepoViews'
 import { EmptyState } from '../components/States'
 import { MAX_REPO_PAGES } from '../services/github'
-import type { GitHubRepo } from '../types/github'
+import {
+  NO_LICENSE,
+  SORT_OPTIONS,
+  STAR_OPTIONS,
+  UPDATED_OPTIONS,
+  applyFilters,
+  collectOptions,
+  countActiveFilters,
+  defaultDir,
+  parseFilters,
+  serializeFilters,
+  type RepoFilters,
+  type SortKey,
+  type UpdatedWindow,
+} from '../utils/repoFilters'
 
 type View = 'cards' | 'table'
-type SortKey = 'pushed' | 'stars' | 'forks' | 'name'
 
-const pushedAt = (r: GitHubRepo) => Date.parse(r.pushed_at ?? r.updated_at)
-
-const sorters: Record<SortKey, (a: GitHubRepo, b: GitHubRepo) => number> = {
-  pushed: (a, b) => pushedAt(b) - pushedAt(a),
-  stars: (a, b) => b.stargazers_count - a.stargazers_count || a.name.localeCompare(b.name),
-  forks: (a, b) => b.forks_count - a.forks_count || a.name.localeCompare(b.name),
-  name: (a, b) => a.name.localeCompare(b.name),
+interface Chip {
+  key: string
+  label: string
+  clear: Partial<RepoFilters>
 }
 
 export default function RepositoriesPage() {
   const { user, repos } = useUserData()
+  const [params, setParams] = useSearchParams()
   const [view, setView] = useState<View>('cards')
-  const [query, setQuery] = useState('')
-  const [language, setLanguage] = useState('')
-  const [sort, setSort] = useState<SortKey>('pushed')
-  const [hideForks, setHideForks] = useState(false)
-  const [hideArchived, setHideArchived] = useState(false)
+
+  // Filters live in the URL, so a filtered view can be bookmarked, shared and used with the back button.
+  const filters = useMemo(() => parseFilters(params), [params])
+  const update = (patch: Partial<RepoFilters>) => setParams(serializeFilters({ ...filters, ...patch }), { replace: true })
+  const changeSort = (sort: SortKey) => update({ sort, dir: defaultDir(sort) })
+  const clearAll = () => update({ query: '', language: '', topic: '', license: '', minStars: 0, updated: '', hideForks: false, hideArchived: false })
 
   const limit = MAX_REPO_PAGES * 100
   const truncated = user.public_repos > repos.length && repos.length >= limit
 
-  const languages = useMemo(
-    () => [...new Set(repos.map((r) => r.language).filter((l): l is string => !!l))].sort((a, b) => a.localeCompare(b)),
-    [repos],
-  )
+  const options = useMemo(() => collectOptions(repos), [repos])
+  const visible = useMemo(() => applyFilters(repos, filters), [repos, filters])
+  const activeCount = countActiveFilters(filters)
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return repos
-      .filter((r) => !(hideForks && r.fork))
-      .filter((r) => !(hideArchived && r.archived))
-      .filter((r) => !language || r.language === language)
-      .filter((r) => !q || r.name.toLowerCase().includes(q) || (r.description ?? '').toLowerCase().includes(q))
-      .sort(sorters[sort])
-  }, [repos, query, language, sort, hideForks, hideArchived])
-
-  const filtersActive = query !== '' || language !== '' || hideForks || hideArchived
-  const clearFilters = () => {
-    setQuery('')
-    setLanguage('')
-    setHideForks(false)
-    setHideArchived(false)
+  const chips: Chip[] = []
+  if (filters.query.trim()) chips.push({ key: 'q', label: `Search: “${filters.query.trim()}”`, clear: { query: '' } })
+  if (filters.language) chips.push({ key: 'lang', label: `Language: ${filters.language}`, clear: { language: '' } })
+  if (filters.topic) chips.push({ key: 'topic', label: `Topic: ${filters.topic}`, clear: { topic: '' } })
+  if (filters.license) {
+    const name = filters.license === NO_LICENSE ? 'No license' : filters.license
+    chips.push({ key: 'license', label: `License: ${name}`, clear: { license: '' } })
   }
+  if (filters.minStars) chips.push({ key: 'stars', label: `${filters.minStars}+ stars`, clear: { minStars: 0 } })
+  if (filters.updated) {
+    const label = UPDATED_OPTIONS.find((o) => o.value === filters.updated)?.label ?? filters.updated
+    chips.push({ key: 'updated', label: `Pushed: ${label.toLowerCase()}`, clear: { updated: '' } })
+  }
+  if (filters.hideForks) chips.push({ key: 'forks', label: 'Forks hidden', clear: { hideForks: false } })
+  if (filters.hideArchived) chips.push({ key: 'archived', label: 'Archived hidden', clear: { hideArchived: false } })
+
+  const sortLabel = SORT_OPTIONS.find((o) => o.value === filters.sort)?.label ?? ''
+  const directionLabel = filters.dir === 'asc' ? 'ascending' : 'descending'
 
   return (
     <div className="stack">
@@ -72,37 +85,101 @@ export default function RepositoriesPage() {
         </div>
       </div>
 
-      <div className="controls">
-        <label className="control-search">
-          <Search size={15} aria-hidden="true" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter by name or description"
-            aria-label="Filter repositories by name or description"
-          />
-        </label>
-        <select className="select" value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Filter by language">
-          <option value="">All languages</option>
-          {languages.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <select className="select" value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort repositories">
-          <option value="pushed">Recently pushed</option>
-          <option value="stars">Most stars</option>
-          <option value="forks">Most forks</option>
-          <option value="name">Name (A–Z)</option>
-        </select>
-        <label className="check">
-          <input type="checkbox" checked={hideForks} onChange={(e) => setHideForks(e.target.checked)} /> Hide forks
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={hideArchived} onChange={(e) => setHideArchived(e.target.checked)} /> Hide archived
-        </label>
+      <div className="card filter-panel">
+        <div className="controls">
+          <label className="control-search">
+            <Search size={15} aria-hidden="true" />
+            <input
+              type="text"
+              value={filters.query}
+              onChange={(e) => update({ query: e.target.value })}
+              placeholder="Search name, description, language or topic"
+              aria-label="Search repositories by name, description, language or topic"
+            />
+          </label>
+          <select className="select" value={filters.sort} onChange={(e) => changeSort(e.target.value as SortKey)} aria-label="Sort repositories by">
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                Sort: {o.label}
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn icon-only"
+            onClick={() => update({ dir: filters.dir === 'asc' ? 'desc' : 'asc' })}
+            aria-label={`Sorted by ${sortLabel}, ${directionLabel}. Click to reverse.`}
+            title={`${directionLabel[0].toUpperCase()}${directionLabel.slice(1)} — click to reverse`}
+          >
+            {filters.dir === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+          </button>
+        </div>
+
+        <div className="controls">
+          <select className="select" value={filters.language} onChange={(e) => update({ language: e.target.value })} aria-label="Filter by language">
+            <option value="">All languages</option>
+            {options.languages.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+          {options.topics.length > 0 && (
+            <select className="select" value={filters.topic} onChange={(e) => update({ topic: e.target.value })} aria-label="Filter by topic">
+              <option value="">All topics</option>
+              {options.topics.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          )}
+          {(options.licenses.length > 0 || options.hasUnlicensed) && (
+            <select className="select" value={filters.license} onChange={(e) => update({ license: e.target.value })} aria-label="Filter by license">
+              <option value="">Any license</option>
+              {options.licenses.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+              {options.hasUnlicensed && <option value={NO_LICENSE}>No license</option>}
+            </select>
+          )}
+          <select className="select" value={filters.minStars} onChange={(e) => update({ minStars: Number(e.target.value) })} aria-label="Minimum stars">
+            {STAR_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n === 0 ? 'Any stars' : `${n}+ stars`}
+              </option>
+            ))}
+          </select>
+          <select className="select" value={filters.updated} onChange={(e) => update({ updated: e.target.value as UpdatedWindow })} aria-label="Last pushed">
+            {UPDATED_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.value === '' ? 'Last pushed: any time' : `Pushed: ${o.label.toLowerCase()}`}
+              </option>
+            ))}
+          </select>
+          <label className="check">
+            <input type="checkbox" checked={filters.hideForks} onChange={(e) => update({ hideForks: e.target.checked })} /> Hide forks
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={filters.hideArchived} onChange={(e) => update({ hideArchived: e.target.checked })} /> Hide archived
+          </label>
+        </div>
+
+        {chips.length > 0 && (
+          <div className="chips" aria-label="Active filters">
+            {chips.map((c) => (
+              <button key={c.key} type="button" className="chip" onClick={() => update(c.clear)} aria-label={`Remove filter: ${c.label}`}>
+                {c.label} <X size={13} aria-hidden="true" />
+              </button>
+            ))}
+            {activeCount > 1 && (
+              <button type="button" className="chip-clear" onClick={clearAll}>
+                Clear all
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {truncated && (
@@ -115,8 +192,8 @@ export default function RepositoriesPage() {
         <EmptyState title="No public repositories" body={`@${user.login} hasn’t published any repositories yet.`} />
       ) : visible.length === 0 ? (
         <EmptyState title="No repositories match" body="Try a different search or remove a filter.">
-          {filtersActive && (
-            <button className="btn" onClick={clearFilters}>
+          {activeCount > 0 && (
+            <button className="btn" onClick={clearAll}>
               Clear filters
             </button>
           )}
@@ -124,7 +201,7 @@ export default function RepositoriesPage() {
       ) : view === 'cards' ? (
         <div className="repo-grid">
           {visible.map((repo) => (
-            <RepoCard key={repo.id} repo={repo} />
+            <RepoCard key={repo.id} repo={repo} onTopic={(topic) => update({ topic })} />
           ))}
         </div>
       ) : (
