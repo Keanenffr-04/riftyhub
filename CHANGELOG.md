@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.0.0 – Workflow
+- Process: every version now ships with a ready-to-paste, professional git commit message
+- No code or README changes
+
 ## v3.0.0 – Documentation
 - README: new "Commands: what they do and when to run them" section covering `npm install`, `npm run dev`, `npm run build` and `npm run preview`, plus typical workflows
 - No code changes
