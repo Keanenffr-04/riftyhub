@@ -4,16 +4,37 @@ Explore any GitHub developer: profile, stats and public repositories, using live
 
 **Stack:** React 18, TypeScript, Vite, React Router, Recharts, Lucide icons, plain CSS.
 
-## Run locally
+## Getting started
 
-Requires Node.js 18+.
+Requires Node.js 18+. Run all commands from the project root (the folder containing `package.json`).
 
+### Commands: what they do and when to run them
+
+| Command | What it does | When to run it |
+| --- | --- | --- |
+| `npm install` | Downloads every package listed in `package.json` into `node_modules/`. | Once after cloning or unzipping the project, and again any time `package.json` changes (e.g. after pulling a new version that adds or upgrades a dependency). |
+| `npm run dev` | Starts the Vite dev server at http://localhost:5173 with hot reload: edits show in the browser instantly. | Every time you sit down to work on the app. Leave it running; stop it with `Ctrl+C`. |
+| `npm run build` | Type-checks the code with TypeScript (`tsc --noEmit`), then creates an optimised production build in `dist/`. Fails if there are type errors. | Before deploying, and before committing bigger changes, to confirm nothing is broken. Netlify runs this automatically on deploy. |
+| `npm run preview` | Serves the built `dist/` folder locally at http://localhost:4173 so you can test the real production output. | After `npm run build`, to check the production version before it goes live. It does not rebuild, so re-run `build` after any code change. |
+
+### Typical workflows
+
+**First time setup:**
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev
 ```
 
-Other commands: `npm run build` (type-check + production build), `npm run preview`.
+**Day-to-day development:**
+```bash
+npm run dev
+```
+
+**Checking before you deploy:**
+```bash
+npm run build
+npm run preview
+```
 
 ## Features
 - Profile, stats and recent commits

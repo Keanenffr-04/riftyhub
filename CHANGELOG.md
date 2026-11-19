@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.0.0 – Documentation
+- README: new "Commands: what they do and when to run them" section covering `npm install`, `npm run dev`, `npm run build` and `npm run preview`, plus typical workflows
+- No code changes
+
 ## v2.0.0 – Analytics and advanced features
 - Analytics page: total stars/forks/open issues, language statistics, top-starred chart, 12-month activity chart (Recharts)
 - Overview: total stars and forks tiles, recent commits (GitHub commit search)
