@@ -1,5 +1,15 @@
 # Changelog
 
+## v9.0.0 – Performance and reliability
+- API and caching: repository pages now load in parallel (the profile's repository count says how many pages exist), repositories are slimmed to the fields the app uses (about 90% smaller in memory and storage), expired and old-format cache entries are removed on start, and the soonest-expiring entries are evicted when browser storage is full
+- Requests: 15-second timeout, up to two automatic retries (with a short pause) for network failures and GitHub server errors, no retries for not-found or rate-limit errors, and no requests are sent once the quota is known to be used up (search keeps its own quota)
+- Pagination and speed: Repositories shows 24 cards or 50 rows at a time with "Show more"; search waits 250 ms after typing before updating; Analytics and Activity (and the charting library) are lazy-loaded
+- Reliability: error boundary so a crashing page shows a message with Reload and Home instead of a blank screen, offline banner, clearer messages for timeouts and GitHub server errors
+- Accessibility: skip-to-content link, per-page tab titles, focus and scroll reset on page change, text lists behind every chart, 44 px touch targets on touch screens
+- Responsiveness: filter controls stack full width on small phones
+- New error kind "server" for GitHub 5xx responses. No new dependencies
+- Adapted from roadmap: loading skeletons, focus styles and reduced-motion support already existed, so v9 builds on them
+
 ## v8.0.0 – Personalisation and user experience
 - Settings page (new sidebar link): show, hide and reorder the Overview sections, comfortable or compact density, default Repositories layout (cards or table); all saved in the browser and applied on every visit
 - Saved profiles: favourites (star), named collections (create, rename, delete, assign), search, three sort options, and "Compare selected" for any two saved developers

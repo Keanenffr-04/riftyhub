@@ -58,6 +58,7 @@ npm run preview
 - Filters are stored in the URL, so a filtered view can be bookmarked or shared
 - Analytics: totals, developer insights (median stars, recent activity, license coverage), interactive charts (rank repositories by stars, forks or issues; activity by creation year or last push), topic and license breakdowns
 - Language statistics by repository count (forks optional, repositories without a language reported) or by real code size, loaded on demand from GitHub
+- Performance and reliability: parallel repository loading, slimmed-down cached data, automatic cache cleanup, request timeout and retries, "Show more" paging for large repository lists, lazy-loaded chart pages, offline banner, error boundary, skip link and text alternatives for charts
 - Personalisation: Settings page to show, hide and reorder Overview sections, choose compact or comfortable density, set the default repository layout, and export/import a backup
 - Saved profiles: favourites, named collections, search, sorting and "Compare selected" for any two saved developers
 - Developer comparison: tally of who leads, 11 metrics, language overlap, most starred repositories, swap button, and a Compare button on every profile
@@ -66,7 +67,7 @@ npm run preview
 
 ## Notes
 - Uses unauthenticated GitHub API requests (60/hour per IP). No tokens are stored or sent.
-- Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch.
+- Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch. Temporary failures are retried automatically and requests time out after 15 seconds.
 - Saved profiles, collections and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
 - Shows up to 300 public repositories per user.
 - Activity uses GitHub's public events (up to 300 events from the last 90 days). The commit explorer uses GitHub's commit search, which allows about 10 searches per minute without a token.

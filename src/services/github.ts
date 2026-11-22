@@ -1,14 +1,15 @@
 import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHubUser } from '../types/github'
 import { mapEvent, type RawEvent } from '../utils/events'
 import { cached } from './cache'
-import { setRateLimit } from './rateLimit'
+import { slimRepo } from '../utils/slim'
+import { getRateLimit, setRateLimit } from './rateLimit'
 
 const API_BASE = 'https://api.github.com'
 const PER_PAGE = 100
 /** Safety cap: 3 pages × 100 = 300 repositories per profile. */
 export const MAX_REPO_PAGES = 3
 
-export type GitHubErrorKind = 'invalid' | 'not_found' | 'rate_limit' | 'network' | 'unknown'
+export type GitHubErrorKind = 'invalid' | 'not_found' | 'rate_limit' | 'network' | 'server' | 'unknown'
 
 export class GitHubError extends Error {
   kind: GitHubErrorKind
@@ -31,40 +32,94 @@ export function isValidUsername(value: string): boolean {
 export const toGitHubError = (err: unknown): GitHubError =>
   err instanceof GitHubError ? err : new GitHubError('unknown', 'Something went wrong.')
 
-async function request<T>(path: string): Promise<T> {
-  let res: Response
+const TIMEOUT_MS = 15_000
+/** Pauses before the 2nd and 3rd attempt when GitHub can't be reached or has a server problem. */
+const RETRY_DELAYS_MS = [600, 1800]
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+/** Once the main quota is used up, fail immediately instead of sending requests GitHub will refuse. */
+function assertQuota(path: string) {
+  if (path.startsWith('/search/')) return // search has its own quota
+  const info = getRateLimit()
+  if (info && info.remaining <= 0 && info.resetAt.getTime() > Date.now()) {
+    throw new GitHubError('rate_limit', 'GitHub API rate limit reached.', info.resetAt)
+  }
+}
+
+async function requestOnce<T>(path: string): Promise<T> {
+  const controller = new AbortController()
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, TIMEOUT_MS)
+
   try {
-    res = await fetch(`${API_BASE}${path}`, { headers: { Accept: 'application/vnd.github+json' } })
-  } catch {
-    throw new GitHubError('network', 'Could not reach GitHub. Check your internet connection and try again.')
+    let res: Response
+    try {
+      res = await fetch(`${API_BASE}${path}`, { headers: { Accept: 'application/vnd.github+json' }, signal: controller.signal })
+    } catch {
+      throw new GitHubError(
+        'network',
+        timedOut ? 'GitHub took too long to respond. Try again in a moment.' : 'Could not reach GitHub. Check your internet connection and try again.',
+      )
+    }
+
+    const limit = res.headers.get('x-ratelimit-limit')
+    const remaining = res.headers.get('x-ratelimit-remaining')
+    const reset = res.headers.get('x-ratelimit-reset')
+    const resource = res.headers.get('x-ratelimit-resource')
+    // Only track the main ("core") quota; search has its own separate quota.
+    if (limit && remaining && reset && (!resource || resource === 'core')) {
+      setRateLimit({ limit: Number(limit), remaining: Number(remaining), resetAt: new Date(Number(reset) * 1000) })
+    }
+
+    if (res.ok) {
+      try {
+        return (await res.json()) as T
+      } catch {
+        throw timedOut
+          ? new GitHubError('network', 'GitHub took too long to respond. Try again in a moment.')
+          : new GitHubError('unknown', 'GitHub sent a response that could not be read.')
+      }
+    }
+
+    if (res.status === 404) throw new GitHubError('not_found', 'User not found.')
+
+    if (res.status === 403 || res.status === 429) {
+      const retryAfter = res.headers.get('retry-after')
+      if (res.status === 429 || remaining === '0' || retryAfter) {
+        const resetAt = retryAfter
+          ? new Date(Date.now() + Number(retryAfter) * 1000)
+          : reset
+            ? new Date(Number(reset) * 1000)
+            : undefined
+        throw new GitHubError('rate_limit', 'GitHub API rate limit reached.', resetAt)
+      }
+    }
+
+    if (res.status >= 500) throw new GitHubError('server', `GitHub is having problems right now (HTTP ${res.status}).`)
+
+    throw new GitHubError('unknown', `GitHub returned an unexpected error (HTTP ${res.status}).`)
+  } finally {
+    clearTimeout(timer)
   }
+}
 
-  const limit = res.headers.get('x-ratelimit-limit')
-  const remaining = res.headers.get('x-ratelimit-remaining')
-  const reset = res.headers.get('x-ratelimit-reset')
-  const resource = res.headers.get('x-ratelimit-resource')
-  // Only track the main ("core") quota; search has its own separate quota.
-  if (limit && remaining && reset && (!resource || resource === 'core')) {
-    setRateLimit({ limit: Number(limit), remaining: Number(remaining), resetAt: new Date(Number(reset) * 1000) })
-  }
-
-  if (res.ok) return (await res.json()) as T
-
-  if (res.status === 404) throw new GitHubError('not_found', 'User not found.')
-
-  if (res.status === 403 || res.status === 429) {
-    const retryAfter = res.headers.get('retry-after')
-    if (res.status === 429 || remaining === '0' || retryAfter) {
-      const resetAt = retryAfter
-        ? new Date(Date.now() + Number(retryAfter) * 1000)
-        : reset
-          ? new Date(Number(reset) * 1000)
-          : undefined
-      throw new GitHubError('rate_limit', 'GitHub API rate limit reached.', resetAt)
+/** One GET request with a timeout, automatic retries for temporary failures, and a fast stop when the quota is spent. */
+async function request<T>(path: string): Promise<T> {
+  assertQuota(path)
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await requestOnce<T>(path)
+    } catch (err) {
+      const temporary = err instanceof GitHubError && (err.kind === 'network' || err.kind === 'server')
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+      if (!temporary || offline || attempt >= RETRY_DELAYS_MS.length) throw err
+      await sleep(RETRY_DELAYS_MS[attempt])
     }
   }
-
-  throw new GitHubError('unknown', `GitHub returned an unexpected error (HTTP ${res.status}).`)
 }
 
 const key = (kind: string, username: string) => `${kind}:${username.toLowerCase()}`
@@ -73,20 +128,27 @@ export function getUser(username: string, force = false): Promise<GitHubUser> {
   return cached(key('user', username), () => request<GitHubUser>(`/users/${encodeURIComponent(username)}`), { force })
 }
 
-/** The user's own public repositories, most recently pushed first (up to MAX_REPO_PAGES × 100). */
+async function fetchRepoPage(username: string, page: number): Promise<GitHubRepo[]> {
+  const batch = await request<GitHubRepo[]>(
+    `/users/${encodeURIComponent(username)}/repos?type=owner&sort=pushed&direction=desc&per_page=${PER_PAGE}&page=${page}`,
+  )
+  return batch.map(slimRepo)
+}
+
+/**
+ * The user's own public repositories, most recently pushed first (up to MAX_REPO_PAGES × 100).
+ * The first page and the profile load together; the profile's repository count then says how many
+ * more pages exist, and those are fetched in parallel. Only the fields RiftyHub uses are kept.
+ */
 export function getRepos(username: string, force = false): Promise<GitHubRepo[]> {
   return cached(
     key('repos', username),
     async () => {
-      const all: GitHubRepo[] = []
-      for (let page = 1; page <= MAX_REPO_PAGES; page++) {
-        const batch = await request<GitHubRepo[]>(
-          `/users/${encodeURIComponent(username)}/repos?type=owner&sort=pushed&direction=desc&per_page=${PER_PAGE}&page=${page}`,
-        )
-        all.push(...batch)
-        if (batch.length < PER_PAGE) break
-      }
-      return all
+      const [user, first] = await Promise.all([getUser(username), fetchRepoPage(username, 1)])
+      if (first.length < PER_PAGE) return first
+      const pages = Math.min(MAX_REPO_PAGES, Math.ceil(user.public_repos / PER_PAGE))
+      const rest = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, i) => fetchRepoPage(username, i + 2)))
+      return first.concat(...rest)
     },
     { force },
   )

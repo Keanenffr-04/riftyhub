@@ -32,6 +32,7 @@ export function LanguageChart({ languages, formatValue, ariaLabel = 'Donut chart
   ]
 
   return (
+    <>
     <div className="chart-box" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -51,6 +52,14 @@ export function LanguageChart({ languages, formatValue, ariaLabel = 'Donut chart
         </PieChart>
       </ResponsiveContainer>
     </div>
+    <ul className="sr-only" aria-label={`${ariaLabel}: values`}>
+      {languages.slice(0, 8).map((l) => (
+        <li key={l.name}>
+          {l.name}: {formatValue ? formatValue(l.count) : `${l.count} ${l.count === 1 ? 'repository' : 'repositories'}`}, {l.percent.toFixed(1)}%
+        </li>
+      ))}
+    </ul>
+    </>
   )
 }
 
@@ -70,6 +79,7 @@ export function TopReposChart({ repos, metric = 'stars' }: { repos: GitHubRepo[]
   const label = METRIC_LABELS[metric]
   const data = repos.map((r) => ({ name: r.name, value: metricValue(r, metric) }))
   return (
+    <>
     <div className="chart-box" role="img" aria-label={`Bar chart of repositories with the most ${label.toLowerCase()}`}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ left: 4, right: 16 }}>
@@ -94,11 +104,20 @@ export function TopReposChart({ repos, metric = 'stars' }: { repos: GitHubRepo[]
         </BarChart>
       </ResponsiveContainer>
     </div>
+    <ul className="sr-only" aria-label={`Repositories with the most ${label.toLowerCase()}`}>
+      {data.map((d) => (
+        <li key={d.name}>
+          {d.name}: {d.value}
+        </li>
+      ))}
+    </ul>
+    </>
   )
 }
 
 export function ActivityChart({ activity, ariaLabel = 'Bar chart of repositories by month of last push' }: { activity: MonthBucket[]; ariaLabel?: string }) {
   return (
+    <>
     <div className="chart-box short" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={activity} margin={{ left: -12, right: 8 }}>
@@ -116,5 +135,15 @@ export function ActivityChart({ activity, ariaLabel = 'Bar chart of repositories
         </BarChart>
       </ResponsiveContainer>
     </div>
+    <ul className="sr-only" aria-label={`${ariaLabel}: periods with activity`}>
+      {activity
+        .filter((b) => b.count > 0)
+        .map((b) => (
+          <li key={b.label}>
+            {b.label}: {b.count}
+          </li>
+        ))}
+    </ul>
+    </>
   )
 }

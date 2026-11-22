@@ -29,6 +29,16 @@ export function PageSkeleton() {
   )
 }
 
+export function RouteFallback() {
+  return (
+    <div className="stack" role="status" aria-live="polite" aria-label="Loading page">
+      <div className="skeleton" style={{ height: 40, width: '40%', borderRadius: 10 }} />
+      <div className="skeleton" style={{ height: 260, borderRadius: 14 }} />
+      <span className="sr-only">Loading…</span>
+    </div>
+  )
+}
+
 export function describeError(error: GitHubError, subject: string) {
   let title = 'Something went wrong'
   let body = error.message
@@ -55,6 +65,10 @@ export function describeError(error: GitHubError, subject: string) {
     }
     case 'network':
       title = 'Can’t reach GitHub'
+      break
+    case 'server':
+      title = 'GitHub is having problems'
+      body = 'This is on GitHub’s side, not yours. Wait a minute and try again.'
       break
   }
   return { title, body, canRetry }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, LayoutGrid, List, Search, X } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
@@ -24,6 +24,10 @@ import {
 
 type View = 'cards' | 'table'
 
+/** Only this many repositories are drawn at a time, so very large accounts stay fast. */
+const PAGE_SIZE: Record<View, number> = { cards: 24, table: 50 }
+const SEARCH_DELAY_MS = 250
+
 interface Chip {
   key: string
   label: string
@@ -42,12 +46,41 @@ export default function RepositoriesPage() {
   const changeSort = (sort: SortKey) => update({ sort, dir: defaultDir(sort) })
   const clearAll = () => update({ query: '', language: '', topic: '', license: '', minStars: 0, updated: '', hideForks: false, hideArchived: false })
 
+  // The search box keeps its own text and updates the URL shortly after typing stops.
+  const [text, setText] = useState(filters.query)
+  const pushedQuery = useRef(filters.query)
+  const latestUpdate = useRef(update) // always the newest version, so a delayed search never undoes a filter changed meanwhile
+  latestUpdate.current = update
+  useEffect(() => {
+    if (filters.query !== pushedQuery.current) {
+      // The query changed from outside the box (a chip or "Clear all"), so follow it.
+      pushedQuery.current = filters.query
+      setText(filters.query)
+    }
+  }, [filters.query])
+  useEffect(() => {
+    if (text === pushedQuery.current) return
+    const timer = setTimeout(() => {
+      pushedQuery.current = text
+      latestUpdate.current({ query: text })
+    }, SEARCH_DELAY_MS)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text])
+
+  const [pages, setPages] = useState(1)
+  const filterKey = params.toString()
+  useEffect(() => {
+    setPages(1)
+  }, [filterKey, view])
+
   const limit = MAX_REPO_PAGES * 100
   const truncated = user.public_repos > repos.length && repos.length >= limit
 
   const options = useMemo(() => collectOptions(repos), [repos])
   const visible = useMemo(() => applyFilters(repos, filters), [repos, filters])
   const activeCount = countActiveFilters(filters)
+  const shownRepos = useMemo(() => visible.slice(0, pages * PAGE_SIZE[view]), [visible, pages, view])
 
   const chips: Chip[] = []
   if (filters.query.trim()) chips.push({ key: 'q', label: `Search: “${filters.query.trim()}”`, clear: { query: '' } })
@@ -93,8 +126,8 @@ export default function RepositoriesPage() {
             <Search size={15} aria-hidden="true" />
             <input
               type="text"
-              value={filters.query}
-              onChange={(e) => update({ query: e.target.value })}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
               placeholder="Search name, description, language or topic"
               aria-label="Search repositories by name, description, language or topic"
             />
@@ -202,12 +235,23 @@ export default function RepositoriesPage() {
         </EmptyState>
       ) : view === 'cards' ? (
         <div className="repo-grid">
-          {visible.map((repo) => (
+          {shownRepos.map((repo) => (
             <RepoCard key={repo.id} repo={repo} onTopic={(topic) => update({ topic })} />
           ))}
         </div>
       ) : (
-        <RepoTable repos={visible} />
+        <RepoTable repos={shownRepos} />
+      )}
+
+      {visible.length > shownRepos.length && (
+        <div className="load-more">
+          <p className="muted small" aria-live="polite">
+            Showing {shownRepos.length} of {visible.length} matching repositories.
+          </p>
+          <button className="btn" onClick={() => setPages((n) => n + 1)}>
+            Show {Math.min(PAGE_SIZE[view], visible.length - shownRepos.length)} more
+          </button>
+        </div>
       )}
     </div>
   )

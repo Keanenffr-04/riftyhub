@@ -33,7 +33,7 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 5. Change the sort and click the arrow button to reverse the order.
 6. Click a topic pill on a card to filter by that topic.
 7. Active filters appear as chips. Click a chip to remove it, or use **Clear all**.
-8. Switch between **Cards** and **Table** at the top right.
+8. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
 9. The address bar keeps your filters, so you can bookmark or share the filtered page.
 
 ### 5. Read the Analytics
@@ -75,6 +75,13 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 ### 10. Keep an eye on the request limit
 RiftyHub uses GitHub without a login, which allows **60 requests per hour**. The meter at the bottom of the sidebar shows how many you have left. If it runs out, wait until the reset time shown. Data is cached for 10 minutes, so revisiting a page doesn't cost extra requests. Click **Refresh data** on a profile to fetch fresh data.
 
+### 11. When something goes wrong
+- **Temporary problems are retried for you.** If GitHub can't be reached or has a server problem, RiftyHub retries up to twice before showing an error, and gives up on a request that takes longer than 15 seconds.
+- **Offline.** A yellow banner appears if your connection drops. Pages you already opened still work.
+- **Rate limit used up.** RiftyHub stops sending requests and tells you when the limit resets.
+- **Unexpected error.** If a page crashes, you get a message with **Reload page** and **Back to home** instead of a blank screen. The rest of the app (the sidebar) keeps working.
+- **Keyboard and screen readers.** Press Tab once on any page to reveal **Skip to main content**. Each page sets its own tab title, focus moves to the content when you change pages, and the charts have text lists of their values.
+
 ---
 
 ## Part 2: What everything does and how it works together
@@ -111,8 +118,8 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 ### The parts under the hood
 | Part | Where | What it does |
 | --- | --- | --- |
-| GitHub service | `src/services/github.ts` | Every request to GitHub goes through here: profile, repositories, events, commit search, language bytes. It turns errors (not found, rate limit, network) into clear messages. |
-| Cache | `src/services/cache.ts` | Remembers responses for 10 minutes (in the browser tab) so repeat visits are instant and don't use your request allowance. |
+| GitHub service | `src/services/github.ts` | Every request to GitHub goes through here: profile, repositories, events, commit search, language bytes. It adds a 15-second timeout, retries temporary failures, stops early when your quota is used up, loads repository pages in parallel and keeps only the fields the app uses. It turns errors into clear messages. |
+| Cache | `src/services/cache.ts` | Remembers responses for 10 minutes (in the browser tab) so repeat visits are instant and don't use your request allowance. Tidies itself: expired entries are removed on start, and the soonest-to-expire entries are dropped if browser storage fills up. |
 | Rate-limit meter | `src/services/rateLimit.ts` | Reads GitHub's rate-limit headers and feeds the sidebar meter. |
 | User layout | `src/components/UserLayout.tsx` | Loads a developer once and shares it with the Overview, Repositories, Analytics and Activity pages, so switching tabs does not reload anything. |
 | Analytics helpers | `src/utils/analytics.ts` | Turns the repository list into totals, medians, language shares, topics and licenses. |
@@ -124,6 +131,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 ### How the pieces work together
 - **One load, many views.** The profile and repositories are fetched once and shared. Overview, Repositories, Analytics and Compare all calculate from the same list. Only Activity, the commit explorer and the code-size language breakdown make extra requests, because they need data the basic load doesn't include.
 - **Real data only.** All numbers come from GitHub. Where GitHub limits what it gives (300 repositories, 300 events over 90 days, 1,000 search results), the page says so.
+- **Heavy parts load only when needed.** The charting library is downloaded the first time you open Analytics or Activity, which keeps the first page load small.
 - **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
 - **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
 - **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
