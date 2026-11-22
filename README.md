@@ -41,7 +41,8 @@ npm run preview
 - Profile tabs (Overview, Repositories, Analytics) for quick navigation
 - Repository explorer: multi-word search (name, description, language, topics), filters for language, topic, license, minimum stars and last push date, hide forks/archived, six sort options with a reverse toggle, removable filter chips
 - Filters are stored in the URL, so a filtered view can be bookmarked or shared
-- Analytics: stars, forks, languages, charts
+- Analytics: totals, developer insights (median stars, recent activity, license coverage), interactive charts (rank repositories by stars, forks or issues; activity by creation year or last push), topic and license breakdowns
+- Language statistics by repository count (forks optional, repositories without a language reported) or by real code size, loaded on demand from GitHub
 - Developer comparison
 - Saved profiles (browser storage)
 
@@ -49,6 +50,7 @@ npm run preview
 - Uses unauthenticated GitHub API requests (60/hour per IP). No tokens are stored or sent.
 - Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch.
 - Shows up to 300 public repositories per user.
+- The code-size language breakdown uses one GitHub request per repository (up to 20 most recently pushed), so it only runs when you click "Load code-size breakdown".
 
 ## Structure
 ```

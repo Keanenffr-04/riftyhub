@@ -14,9 +14,11 @@ Ideas for future versions. Items are moved into a version only when it has room 
 - Pinned repositories on the Overview page
 
 ## Analytics / data
-- Repository size and license breakdown charts (V6)
+- Per-repository code-size breakdown (click a repository to see its languages)
+- Language trends over time
 - Contributions beyond the 300-repository cap
 
 ## Quality
 - Automated tests for the filter helpers (verified manually in v5)
 - Lighthouse accessibility pass (V9)
+- Automated tests for analytics helpers (verified manually in v6)

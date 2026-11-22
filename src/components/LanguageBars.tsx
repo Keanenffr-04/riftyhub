@@ -1,6 +1,13 @@
 import type { LanguageStat } from '../utils/analytics'
 
-export default function LanguageBars({ languages, limit = 7 }: { languages: LanguageStat[]; limit?: number }) {
+interface Props {
+  languages: LanguageStat[]
+  limit?: number
+  /** How to print each row's raw value (default: the plain number). */
+  formatValue?: (n: number) => string
+}
+
+export default function LanguageBars({ languages, limit = 7, formatValue = String }: Props) {
   if (languages.length === 0) return <p className="muted">No language data available.</p>
 
   return (
@@ -13,7 +20,7 @@ export default function LanguageBars({ languages, limit = 7 }: { languages: Lang
               {l.name}
             </span>
             <span className="muted">
-              {l.count} · {l.percent.toFixed(1)}%
+              {formatValue(l.count)} · {l.percent.toFixed(1)}%
             </span>
           </div>
           <div className="bar">

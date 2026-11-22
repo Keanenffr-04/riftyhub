@@ -91,6 +91,15 @@ export function getRepos(username: string, force = false): Promise<GitHubRepo[]>
   )
 }
 
+/** Bytes of code per language for one repository (GitHub's own language detection). */
+export function getRepoLanguages(fullName: string, force = false): Promise<Record<string, number>> {
+  const path = fullName.split('/').map(encodeURIComponent).join('/')
+  return cached(key('languages', fullName), () => request<Record<string, number>>(`/repos/${path}/languages`), {
+    force,
+    ttl: 30 * 60 * 1000,
+  })
+}
+
 interface CommitSearchResponse {
   items: {
     sha: string

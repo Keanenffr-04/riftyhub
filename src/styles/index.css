@@ -427,3 +427,11 @@ a.tab:hover { color: var(--text); }
   .tabs { margin-left: 0; width: 100%; }
   .user-bar-id { padding-bottom: 0; }
 }
+
+/* ---------- v6 additions ---------- */
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.panel-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.sub-heading { margin-bottom: 12px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.lang-load { display: flex; flex-direction: column; gap: 12px; }
+.notice-inline { color: #f3c969; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }

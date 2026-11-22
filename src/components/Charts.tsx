@@ -16,7 +16,14 @@ const tooltipStyle: CSSProperties = {
 }
 const tooltipText: CSSProperties = { color: '#ececf2' }
 
-export function LanguageChart({ languages }: { languages: LanguageStat[] }) {
+interface LanguageChartProps {
+  languages: LanguageStat[]
+  /** Formats a slice's value for the tooltip; default is a repository count. */
+  formatValue?: (n: number) => string
+  ariaLabel?: string
+}
+
+export function LanguageChart({ languages, formatValue, ariaLabel = 'Donut chart of repositories by primary language' }: LanguageChartProps) {
   const top = languages.slice(0, 7)
   const rest = languages.slice(7)
   const data = [
@@ -25,7 +32,7 @@ export function LanguageChart({ languages }: { languages: LanguageStat[] }) {
   ]
 
   return (
-    <div className="chart-box" role="img" aria-label="Donut chart of repositories by primary language">
+    <div className="chart-box" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie data={data} dataKey="value" nameKey="name" innerRadius="58%" outerRadius="92%" paddingAngle={2} stroke="none">
@@ -36,7 +43,10 @@ export function LanguageChart({ languages }: { languages: LanguageStat[] }) {
           <Tooltip
             contentStyle={tooltipStyle}
             itemStyle={tooltipText}
-            formatter={(value, name) => [`${value} ${value === 1 ? 'repository' : 'repositories'}`, String(name)]}
+            formatter={(value, name) => [
+              formatValue ? formatValue(Number(value)) : `${value} ${value === 1 ? 'repository' : 'repositories'}`,
+              String(name),
+            ]}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -44,10 +54,23 @@ export function LanguageChart({ languages }: { languages: LanguageStat[] }) {
   )
 }
 
-export function TopReposChart({ repos }: { repos: GitHubRepo[] }) {
-  const data = repos.map((r) => ({ name: r.name, stars: r.stargazers_count }))
+export type RepoMetric = 'stars' | 'forks' | 'issues'
+
+export const METRIC_LABELS: Record<RepoMetric, string> = {
+  stars: 'Stars',
+  forks: 'Forks',
+  issues: 'Open issues and PRs',
+}
+
+export function metricValue(repo: GitHubRepo, metric: RepoMetric): number {
+  return metric === 'stars' ? repo.stargazers_count : metric === 'forks' ? repo.forks_count : repo.open_issues_count
+}
+
+export function TopReposChart({ repos, metric = 'stars' }: { repos: GitHubRepo[]; metric?: RepoMetric }) {
+  const label = METRIC_LABELS[metric]
+  const data = repos.map((r) => ({ name: r.name, value: metricValue(r, metric) }))
   return (
-    <div className="chart-box" role="img" aria-label="Bar chart of most starred repositories">
+    <div className="chart-box" role="img" aria-label={`Bar chart of repositories with the most ${label.toLowerCase()}`}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ left: 4, right: 16 }}>
           <CartesianGrid stroke={GRID} horizontal={false} />
@@ -65,18 +88,18 @@ export function TopReposChart({ repos }: { repos: GitHubRepo[] }) {
             contentStyle={tooltipStyle}
             itemStyle={tooltipText}
             labelStyle={tooltipText}
-            formatter={(value) => [`${value}`, 'Stars']}
+            formatter={(value) => [`${value}`, label]}
           />
-          <Bar dataKey="stars" fill={ACCENT} radius={[0, 4, 4, 0]} />
+          <Bar dataKey="value" fill={ACCENT} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
   )
 }
 
-export function ActivityChart({ activity }: { activity: MonthBucket[] }) {
+export function ActivityChart({ activity, ariaLabel = 'Bar chart of repositories by month of last push' }: { activity: MonthBucket[]; ariaLabel?: string }) {
   return (
-    <div className="chart-box short" role="img" aria-label="Bar chart of repositories by month of last push">
+    <div className="chart-box short" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={activity} margin={{ left: -12, right: 8 }}>
           <CartesianGrid stroke={GRID} vertical={false} />

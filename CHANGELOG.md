@@ -1,5 +1,12 @@
 # Changelog
 
+## v6.0.0 – Advanced analytics
+- Expanded statistics: new "Developer insights" tiles (original vs fork count, median stars, repositories pushed in the last 12 months, license coverage, archived count, first repository year), top topics and license breakdown panels
+- Interactive charts: "Top repositories" can be ranked by stars, forks or open issues; "Activity" switches between repositories created per year and last push by month
+- Language statistics accuracy: "Include forks" option, repositories with no detected language are now reported instead of silently ignored, and an on-demand "Code size" view using GitHub's real per-language byte counts (up to 20 most recently pushed repositories, one request each, rate-limit aware, partial results explained)
+- Clarified labels: GitHub's open issue count includes pull requests
+- No new dependencies. Adapted from roadmap: totals, language counts and activity charts already existed from v2, so v6 extends them
+
 ## v5.0.0 – Dashboard UI and repository explorer
 - Dashboard UI: profile tab bar on every profile page (Overview / Repositories / Analytics) with a compact identity header on inner pages; Overview stat tiles now have icons; new "Top languages" and "Most starred" panels built from the loaded repositories
 - Repository explorer: search now matches name, description, language and topics (every word must match); new filters for topic, license, minimum stars and last-pushed window; new sort options (date created, open issues) with an ascending/descending toggle; topic pills on cards filter on click; removable filter chips and "Clear all"
