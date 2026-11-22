@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, LayoutGrid, List, Search, X } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
+import { usePreferences } from '../hooks/usePreferences'
 import { RepoCard, RepoTable } from '../components/RepoViews'
 import { EmptyState } from '../components/States'
 import { MAX_REPO_PAGES } from '../services/github'
@@ -32,7 +33,8 @@ interface Chip {
 export default function RepositoriesPage() {
   const { user, repos } = useUserData()
   const [params, setParams] = useSearchParams()
-  const [view, setView] = useState<View>('cards')
+  const { preferences } = usePreferences()
+  const [view, setView] = useState<View>(preferences.repoView)
 
   // Filters live in the URL, so a filtered view can be bookmarked, shared and used with the back button.
   const filters = useMemo(() => parseFilters(params), [params])

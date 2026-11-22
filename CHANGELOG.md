@@ -1,5 +1,13 @@
 # Changelog
 
+## v8.0.0 – Personalisation and user experience
+- Settings page (new sidebar link): show, hide and reorder the Overview sections, comfortable or compact density, default Repositories layout (cards or table); all saved in the browser and applied on every visit
+- Saved profiles: favourites (star), named collections (create, rename, delete, assign), search, three sort options, and "Compare selected" for any two saved developers
+- Backup and restore: export saved profiles, collections and preferences to a JSON file and import them back (imports add to existing data)
+- Data safety: stored data is validated on load, so old, damaged or hand-edited data falls back to safe defaults; profiles saved in earlier versions load unchanged
+- New USER_GUIDE.md: step-by-step usage and an explanation of how the parts work together
+- No new dependencies. Adapted from roadmap: the saved-profile list and Compare button already existed from v2, so v8 extends them
+
 ## v7.0.0 – Developer comparison and activity
 - Compare: now 11 metrics (adds original repositories, median stars, pushed in the last 12 months, license coverage, archived), a summary of who leads in how many metrics, language overlap (shared and unique languages), most starred repositories per developer, a swap button, and a Compare button on every profile
 - New Activity page and tab: real public event timeline grouped by day (pushes, pull requests, issues, reviews, comments, stars, forks, releases) with type and repository filters, activity tiles and a daily activity chart

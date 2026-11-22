@@ -1,0 +1,135 @@
+# RiftyHub User Guide
+
+A step-by-step guide to using RiftyHub, followed by an explanation of what every part does and how the parts work together.
+
+---
+
+## Part 1: Step by step
+
+### 1. Start the app
+1. Open PowerShell in the project folder (the one that contains `package.json`).
+2. First time only: run `npm install`.
+3. Run `npm run dev`.
+4. Open **http://localhost:5173** in your browser.
+5. Leave PowerShell open while you use the app. Press `Ctrl+C` to stop it.
+
+### 2. Look up a developer
+1. On the Home page, type a GitHub username (for example `torvalds`) and press Enter. You can also click one of the example names.
+2. You land on that developer's **Overview** page.
+
+### 3. Read the Overview
+- The **profile card** shows their avatar, name, bio, company, location, website and join date.
+- The **statistics tiles** show repositories, stars, forks, followers, following and gists.
+- **Top languages** and **Most starred** give a quick summary of their work.
+- **Recent commits** lists their latest public commits.
+- **Recently active repositories** shows the six most recently pushed projects.
+- Use the tabs at the top (Overview, Repositories, Analytics, Activity) or the sidebar to move between pages.
+
+### 4. Explore their repositories
+1. Click the **Repositories** tab.
+2. Type in the search box to search names, descriptions, languages and topics. Every word you type must match.
+3. Use the drop-downs to filter by language, topic, license, minimum stars and when it was last pushed.
+4. Tick **Hide forks** or **Hide archived** to remove those.
+5. Change the sort and click the arrow button to reverse the order.
+6. Click a topic pill on a card to filter by that topic.
+7. Active filters appear as chips. Click a chip to remove it, or use **Clear all**.
+8. Switch between **Cards** and **Table** at the top right.
+9. The address bar keeps your filters, so you can bookmark or share the filtered page.
+
+### 5. Read the Analytics
+1. Click the **Analytics** tab.
+2. The top tiles show totals. **Developer insights** adds median stars, recent activity, license coverage and more.
+3. **Languages**: choose *Repository count* or *Code size*. Tick *Include forks* if you want forks counted. For *Code size*, click **Load code-size breakdown** (it uses up to 20 of your GitHub requests).
+4. **Top repositories**: switch between Stars, Forks and Issues.
+5. **Activity**: switch between repositories created per year and last push by month.
+6. **Top topics** and **Licenses** show the most common ones.
+
+### 6. Follow their activity
+1. Click the **Activity** tab.
+2. The tiles and chart summarise their public events from the last 90 days.
+3. The **Timeline** lists each event by day. Filter by type (pushes, pull requests, issues, reviews and so on) or by repository, and click **Show more** for older events.
+4. The **Commit explorer** searches every public commit they authored: type words from the commit message, pick a repository and date range, and click **Search**. Click **Load 30 more** for further results.
+
+### 7. Compare two developers
+1. Click **Compare** in the sidebar (or the **Compare** button on a profile).
+2. Enter two usernames and click **Compare**. The swap button flips them.
+3. Read the summary line (who leads in how many metrics), the table, the language overlap, and each developer's most starred repositories.
+4. The link in your address bar can be shared.
+
+### 8. Save people you want to come back to
+1. On a profile, click **Save profile**.
+2. Open **Saved profiles** in the sidebar.
+3. Click the star to make someone a **favourite**.
+4. Type a name under *New collection name* and click **Create collection** (for example "Mentors" or "Hiring").
+5. Open the **Collections** menu on a saved profile and tick the collections it belongs to.
+6. Use the chips to view All, Favourites or one collection. With a collection selected you can **Rename** or **Delete** it (profiles stay saved).
+7. Search saved profiles, sort them, or tick two profiles and click **Compare selected**.
+
+### 9. Make RiftyHub yours
+1. Open **Settings** in the sidebar.
+2. **Overview layout**: tick sections to show or hide them, and use the arrows to reorder them.
+3. **Display**: choose Comfortable or Compact spacing, and whether Repositories starts as Cards or Table.
+4. **Backup and restore**: click **Export backup** to download a file with your saved profiles, collections and preferences. **Import backup** adds a backup file to what you already have.
+5. Changes apply immediately and are remembered next time.
+
+### 10. Keep an eye on the request limit
+RiftyHub uses GitHub without a login, which allows **60 requests per hour**. The meter at the bottom of the sidebar shows how many you have left. If it runs out, wait until the reset time shown. Data is cached for 10 minutes, so revisiting a page doesn't cost extra requests. Click **Refresh data** on a profile to fetch fresh data.
+
+---
+
+## Part 2: What everything does and how it works together
+
+### The big picture
+RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub server and no account. When you look up a developer, your browser asks **GitHub's public API** for the data, turns it into statistics and charts, and shows it. Nothing you search is sent anywhere else.
+
+```
+ You type a username
+        │
+        ▼
+ React Router opens /u/<username>
+        │
+        ▼
+ UserLayout asks the GitHub service for the profile + repositories
+        │                 (cache first, then GitHub, rate limit tracked)
+        ▼
+ Overview / Repositories / Analytics / Activity pages
+ all read the same loaded data and calculate what they need
+```
+
+### The pages
+| Page | What it does |
+| --- | --- |
+| **Home** | Search box and example usernames. |
+| **Overview** | Profile card plus summary sections you can reorder or hide. |
+| **Repositories** | Search, filter and sort a developer's repositories. |
+| **Analytics** | Statistics, language breakdowns and charts. |
+| **Activity** | Public event timeline and the commit explorer. |
+| **Compare** | Two developers side by side. |
+| **Saved profiles** | Your favourites and collections. |
+| **Settings** | Layout, display, backup and restore. |
+
+### The parts under the hood
+| Part | Where | What it does |
+| --- | --- | --- |
+| GitHub service | `src/services/github.ts` | Every request to GitHub goes through here: profile, repositories, events, commit search, language bytes. It turns errors (not found, rate limit, network) into clear messages. |
+| Cache | `src/services/cache.ts` | Remembers responses for 10 minutes (in the browser tab) so repeat visits are instant and don't use your request allowance. |
+| Rate-limit meter | `src/services/rateLimit.ts` | Reads GitHub's rate-limit headers and feeds the sidebar meter. |
+| User layout | `src/components/UserLayout.tsx` | Loads a developer once and shares it with the Overview, Repositories, Analytics and Activity pages, so switching tabs does not reload anything. |
+| Analytics helpers | `src/utils/analytics.ts` | Turns the repository list into totals, medians, language shares, topics and licenses. |
+| Filter helpers | `src/utils/repoFilters.ts` | Applies the Repositories search, filters and sorting, and reads and writes them in the URL. |
+| Event helpers | `src/utils/events.ts`, `activity.ts` | Turn GitHub's raw events into readable timeline entries, daily counts and summaries. |
+| Persistent store | `src/utils/persistentStore.ts` | Saves your preferences, saved profiles and collections in the browser (localStorage) and keeps open tabs in sync. |
+| Preferences and saved helpers | `src/utils/preferences.ts`, `saved.ts` | Validate stored data (so damaged or old data can never break the app), and handle filtering, merging and backup. |
+
+### How the pieces work together
+- **One load, many views.** The profile and repositories are fetched once and shared. Overview, Repositories, Analytics and Compare all calculate from the same list. Only Activity, the commit explorer and the code-size language breakdown make extra requests, because they need data the basic load doesn't include.
+- **Real data only.** All numbers come from GitHub. Where GitHub limits what it gives (300 repositories, 300 events over 90 days, 1,000 search results), the page says so.
+- **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
+- **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
+- **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
+- **Your data stays with you.** Saved profiles, collections and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
+
+### Good to know
+- Without a GitHub token, GitHub allows 60 requests per hour and about 10 commit searches per minute.
+- Only public data is shown. Private repositories never appear.
+- Clearing your browser data erases saved profiles and preferences unless you exported a backup.

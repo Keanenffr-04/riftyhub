@@ -8,6 +8,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import ActivityPage from './pages/ActivityPage'
 import ComparePage from './pages/ComparePage'
 import SavedPage from './pages/SavedPage'
+import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         </Route>
         <Route path="compare" element={<ComparePage />} />
         <Route path="saved" element={<SavedPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

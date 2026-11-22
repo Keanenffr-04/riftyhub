@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Activity, BarChart3, Bookmark, FolderGit2, GitCompare, Home, LayoutDashboard, X } from 'lucide-react'
+import { Activity, BarChart3, Bookmark, FolderGit2, GitCompare, Home, LayoutDashboard, Settings, X } from 'lucide-react'
 import Logo from './Logo'
 import RateLimitMeter from './RateLimitMeter'
 import { useSavedProfiles } from '../hooks/useSavedProfiles'
@@ -57,6 +57,9 @@ export default function Sidebar({ username, open, onClose }: Props) {
         <NavLink to="/saved" className={linkClass} onClick={onClose}>
           <Bookmark size={17} /> Saved profiles
           {profiles.length > 0 && <span className="badge">{profiles.length}</span>}
+        </NavLink>
+        <NavLink to="/settings" className={linkClass} onClick={onClose}>
+          <Settings size={17} /> Settings
         </NavLink>
       </nav>
 

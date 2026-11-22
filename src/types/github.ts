@@ -58,6 +58,10 @@ export interface SavedProfile {
   name: string | null
   avatar_url: string
   savedAt: string
+  /** Pinned to the top of the saved list. */
+  favorite?: boolean
+  /** Names of the collections this profile belongs to. */
+  collections?: string[]
 }
 
 export type ActivityKind = 'push' | 'pull_request' | 'issue' | 'review' | 'comment' | 'create' | 'fork' | 'star' | 'release' | 'other'

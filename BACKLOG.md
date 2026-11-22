@@ -9,7 +9,9 @@ Ideas for future versions. Items are moved into a version only when it has room 
 - Saved filter presets
 
 ## Dashboard
-- Light theme and theme switcher (fits V8 personalisation)
+- Light theme and theme switcher
+- Default sort and filters for the Repositories page as a preference
+- Drag-and-drop reordering of Overview sections
 - Keyboard shortcut to focus the search box
 - Pinned repositories on the Overview page
 
@@ -24,7 +26,12 @@ Ideas for future versions. Items are moved into a version only when it has room 
 - Commit activity heatmap beyond GitHub's 90-day event window
 - Per-repository activity page
 
+## Saved profiles
+- Notes on each saved profile
+- Sync across browsers (would need an account or a server)
+- "Clear cached GitHub data" button in Settings
+
 ## Quality
 - Automated tests for the filter helpers (verified manually in v5)
 - Lighthouse accessibility pass (V9)
-- Automated tests for analytics, event-mapping and activity helpers (verified manually in v6 and v7)
+- Automated tests for analytics, event-mapping, activity, preferences and saved-profile helpers (verified manually in v6 to v8)

@@ -17,6 +17,8 @@ Then open **[http://localhost:5173](http://localhost:5173)** in your browser. Ke
 
 Requires Node.js 18+ (check with `node -v`). If the page doesn't load, make sure `npm run dev` is still running. If port 5173 is busy, Vite prints a different address in PowerShell: open that one instead.
 
+See [USER_GUIDE.md](USER_GUIDE.md) for a step-by-step walkthrough and an explanation of how everything works together.
+
 ## Getting started
 
 Requires Node.js 18+. Run all commands from the project root (the folder containing `package.json`).
@@ -56,6 +58,8 @@ npm run preview
 - Filters are stored in the URL, so a filtered view can be bookmarked or shared
 - Analytics: totals, developer insights (median stars, recent activity, license coverage), interactive charts (rank repositories by stars, forks or issues; activity by creation year or last push), topic and license breakdowns
 - Language statistics by repository count (forks optional, repositories without a language reported) or by real code size, loaded on demand from GitHub
+- Personalisation: Settings page to show, hide and reorder Overview sections, choose compact or comfortable density, set the default repository layout, and export/import a backup
+- Saved profiles: favourites, named collections, search, sorting and "Compare selected" for any two saved developers
 - Developer comparison: tally of who leads, 11 metrics, language overlap, most starred repositories, swap button, and a Compare button on every profile
 - Activity page: public event timeline with filters, daily activity chart and a commit explorer (search messages, filter by repository and date)
 - Saved profiles (browser storage)
@@ -63,6 +67,7 @@ npm run preview
 ## Notes
 - Uses unauthenticated GitHub API requests (60/hour per IP). No tokens are stored or sent.
 - Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch.
+- Saved profiles, collections and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
 - Shows up to 300 public repositories per user.
 - Activity uses GitHub's public events (up to 300 events from the last 90 days). The commit explorer uses GitHub's commit search, which allows about 10 searches per minute without a token.
 - The code-size language breakdown uses one GitHub request per repository (up to 20 most recently pushed), so it only runs when you click "Load code-size breakdown".
@@ -71,7 +76,7 @@ npm run preview
 ```
 src/
   components/   UI building blocks (shell, sidebar, cards, charts, states)
-  pages/        Home, Overview, Repositories, Analytics, Activity, Compare, Saved
+  pages/        Home, Overview, Repositories, Analytics, Activity, Compare, Saved, Settings
   hooks/        useGitHubData (loading / error / success state)
   services/     GitHub API client, cache, rate-limit tracking
   styles/       Design tokens and global styles

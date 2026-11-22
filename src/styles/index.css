@@ -451,3 +451,45 @@ a.tab:hover { color: var(--text); }
 @media (max-width: 700px) {
   .overlap { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- v8 additions ---------- */
+.saved-top { display: flex; align-items: center; gap: 12px; }
+.saved-top .saved-link { flex: 1; min-width: 0; }
+.select-box { display: inline-flex; align-items: center; cursor: pointer; }
+.select-box input { accent-color: var(--accent); width: 16px; height: 16px; }
+.fav-btn { color: var(--muted); flex: none; }
+.fav-btn:hover { color: #f3c969; }
+.fav-btn.on { color: #f3c969; }
+.filter-chip { background: var(--surface); border-color: var(--border-strong); color: var(--muted); }
+.filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: #d4c6ff; }
+.chip-count { padding: 0 6px; border-radius: 999px; background: var(--raised); font-size: 12px; }
+.inline-input {
+  padding: 8px 12px; background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); color: var(--text); outline: none; min-width: 200px;
+}
+.inline-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.menu summary { cursor: pointer; color: var(--muted); font-size: 13.5px; font-weight: 550; width: fit-content; }
+.menu summary:hover, .menu[open] summary { color: var(--text); }
+.menu-panel { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
+.menu > .muted { padding-top: 8px; }
+
+.section-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.section-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.section-list li:last-child { border-bottom: 0; }
+.section-list .check { align-items: flex-start; color: var(--text); }
+.section-moves { display: inline-flex; gap: 4px; flex: none; }
+.section-moves .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.setting-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.block { display: block; }
+
+/* Compact density */
+:root[data-density='compact'] .content { padding: 20px 24px; }
+:root[data-density='compact'] .stack,
+:root[data-density='compact'] .user-page { gap: 14px; }
+:root[data-density='compact'] .panel { padding: 14px 16px; gap: 9px; }
+:root[data-density='compact'] .stat-tile { padding: 10px 14px; }
+:root[data-density='compact'] .repo-card { padding: 12px 14px; gap: 7px; }
+:root[data-density='compact'] .commit-list li { padding: 8px 14px; }
+:root[data-density='compact'] .compare-table th,
+:root[data-density='compact'] .compare-table td { padding: 9px 14px; }
+:root[data-density='compact'] .saved-card { padding: 12px 14px; gap: 10px; }
