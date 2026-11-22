@@ -59,3 +59,23 @@ export interface SavedProfile {
   avatar_url: string
   savedAt: string
 }
+
+export type ActivityKind = 'push' | 'pull_request' | 'issue' | 'review' | 'comment' | 'create' | 'fork' | 'star' | 'release' | 'other'
+
+/** One public GitHub event, simplified for display. */
+export interface ActivityEvent {
+  id: string
+  kind: ActivityKind
+  repo: string
+  createdAt: string
+  title: string
+  url: string | null
+  /** Number of commits for push events, otherwise 0. */
+  commits: number
+}
+
+export interface CommitSearchResult {
+  commits: GitHubCommit[]
+  total: number
+  incomplete: boolean
+}

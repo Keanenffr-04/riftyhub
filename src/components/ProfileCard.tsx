@@ -1,4 +1,5 @@
-import { Bookmark, BookmarkCheck, Building2, Calendar, ExternalLink, Link2, MapPin, RefreshCw, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Bookmark, BookmarkCheck, Building2, Calendar, ExternalLink, GitCompare, Link2, MapPin, RefreshCw, Users } from 'lucide-react'
 import type { GitHubUser } from '../types/github'
 import { useSavedProfiles } from '../hooks/useSavedProfiles'
 import { formatCompact, formatDate, normalizeUrl } from '../utils/format'
@@ -49,6 +50,9 @@ export default function ProfileCard({ user, onRefresh }: { user: GitHubUser; onR
           <button className={`btn${saved ? ' btn-saved' : ''}`} onClick={() => toggle(user)} aria-pressed={saved}>
             {saved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />} {saved ? 'Saved' : 'Save profile'}
           </button>
+          <Link className="btn" to={`/compare?a=${encodeURIComponent(user.login)}`}>
+            <GitCompare size={15} /> Compare
+          </Link>
           <button className="btn" onClick={onRefresh}>
             <RefreshCw size={15} /> Refresh data
           </button>

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart3, Bookmark, FolderGit2, GitCompare, Home, LayoutDashboard, X } from 'lucide-react'
+import { Activity, BarChart3, Bookmark, FolderGit2, GitCompare, Home, LayoutDashboard, X } from 'lucide-react'
 import Logo from './Logo'
 import RateLimitMeter from './RateLimitMeter'
 import { useSavedProfiles } from '../hooks/useSavedProfiles'
@@ -19,6 +19,7 @@ export default function Sidebar({ username, open, onClose }: Props) {
     { to: base, label: 'Overview', icon: LayoutDashboard, end: true },
     { to: base && `${base}/repos`, label: 'Repositories', icon: FolderGit2, end: false },
     { to: base && `${base}/analytics`, label: 'Analytics', icon: BarChart3, end: false },
+    { to: base && `${base}/activity`, label: 'Activity', icon: Activity, end: false },
   ]
 
   return (

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { GitCommitHorizontal, RefreshCw } from 'lucide-react'
 import { useRecentCommits } from '../hooks/useRecentCommits'
 import { describeError } from './States'
@@ -10,6 +11,7 @@ export default function RecentCommits({ username }: { username: string }) {
     <section aria-labelledby="commits-heading">
       <div className="section-head">
         <h2 id="commits-heading">Recent commits</h2>
+        <Link to="activity">Explore activity</Link>
       </div>
 
       {state.status === 'loading' && (

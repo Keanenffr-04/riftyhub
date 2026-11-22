@@ -1,4 +1,5 @@
-import type { GitHubCommit, GitHubRepo, GitHubUser } from '../types/github'
+import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHubUser } from '../types/github'
+import { mapEvent, type RawEvent } from '../utils/events'
 import { cached } from './cache'
 import { setRateLimit } from './rateLimit'
 
@@ -101,6 +102,8 @@ export function getRepoLanguages(fullName: string, force = false): Promise<Recor
 }
 
 interface CommitSearchResponse {
+  total_count?: number
+  incomplete_results?: boolean
   items: {
     sha: string
     html_url: string
@@ -125,6 +128,74 @@ export function getRecentCommits(username: string, force = false): Promise<GitHu
         date: item.commit.author.date,
         repo: item.repository.full_name,
       }))
+    },
+    { force },
+  )
+}
+
+/** Safety cap: 3 pages × 100 = the 300 most recent public events GitHub makes available (last 90 days). */
+const EVENT_PAGES = 3
+
+/** The user's recent public activity (pushes, pull requests, issues, reviews, …), newest first. */
+export function getUserEvents(username: string, force = false): Promise<ActivityEvent[]> {
+  return cached(
+    key('events', username),
+    async () => {
+      const all: ActivityEvent[] = []
+      for (let page = 1; page <= EVENT_PAGES; page++) {
+        const batch = await request<RawEvent[]>(`/users/${encodeURIComponent(username)}/events/public?per_page=100&page=${page}`)
+        for (const raw of batch) {
+          const event = mapEvent(raw)
+          if (event) all.push(event)
+        }
+        if (batch.length < 100) break
+      }
+      return all
+    },
+    { force },
+  )
+}
+
+export const COMMIT_PAGE_SIZE = 30
+/** GitHub search only returns the first 1,000 results, so paging stops well before that. */
+export const MAX_COMMIT_PAGES = 10
+
+export interface CommitQuery {
+  text: string
+  /** Full repository name, e.g. "owner/name", or empty for all repositories. */
+  repo: string
+  /** Earliest author date as YYYY-MM-DD, or empty for all time. */
+  since: string
+}
+
+/** One page of the user's commits from GitHub's commit search, newest first. */
+export function searchCommits(username: string, query: CommitQuery, page = 1, force = false): Promise<CommitSearchResult> {
+  // Qualifier characters are removed from free text so it can only search commit messages.
+  const text = query.text.replace(/[:"]/g, ' ').trim()
+  const parts = [text, `author:${username}`]
+  if (query.repo) parts.push(`repo:${query.repo}`)
+  if (query.since) parts.push(`author-date:>=${query.since}`)
+  const q = encodeURIComponent(parts.filter(Boolean).join(' '))
+
+  return cached(
+    key('commitsearch', `${username}:${q}:${page}`),
+    async () => {
+      const res = await request<CommitSearchResponse>(
+        `/search/commits?q=${q}&sort=author-date&order=desc&per_page=${COMMIT_PAGE_SIZE}&page=${page}`,
+      )
+      return {
+        total: res.total_count ?? res.items.length,
+        incomplete: res.incomplete_results ?? false,
+        commits: res.items.map(
+          (item): GitHubCommit => ({
+            sha: item.sha,
+            message: item.commit.message.split('\n')[0],
+            url: item.html_url,
+            date: item.commit.author.date,
+            repo: item.repository.full_name,
+          }),
+        ),
+      }
     },
     { force },
   )

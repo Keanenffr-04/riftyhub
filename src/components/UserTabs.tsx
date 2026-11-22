@@ -1,5 +1,5 @@
 import { NavLink, useMatch } from 'react-router-dom'
-import { BarChart3, FolderGit2, LayoutDashboard } from 'lucide-react'
+import { Activity, BarChart3, FolderGit2, LayoutDashboard } from 'lucide-react'
 import type { GitHubUser } from '../types/github'
 
 interface Props {
@@ -33,6 +33,9 @@ export default function UserTabs({ username, user, repoCount }: Props) {
         </NavLink>
         <NavLink to={`${base}/analytics`} className={tabClass}>
           <BarChart3 size={15} aria-hidden="true" /> Analytics
+        </NavLink>
+        <NavLink to={`${base}/activity`} className={tabClass}>
+          <Activity size={15} aria-hidden="true" /> Activity
         </NavLink>
       </nav>
     </div>

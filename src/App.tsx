@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import OverviewPage from './pages/OverviewPage'
 import RepositoriesPage from './pages/RepositoriesPage'
 import AnalyticsPage from './pages/AnalyticsPage'
+import ActivityPage from './pages/ActivityPage'
 import ComparePage from './pages/ComparePage'
 import SavedPage from './pages/SavedPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -18,6 +19,7 @@ export default function App() {
           <Route index element={<OverviewPage />} />
           <Route path="repos" element={<RepositoriesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="activity" element={<ActivityPage />} />
         </Route>
         <Route path="compare" element={<ComparePage />} />
         <Route path="saved" element={<SavedPage />} />

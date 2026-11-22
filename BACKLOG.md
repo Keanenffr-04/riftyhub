@@ -18,7 +18,13 @@ Ideas for future versions. Items are moved into a version only when it has room 
 - Language trends over time
 - Contributions beyond the 300-repository cap
 
+## Comparison and activity
+- Compare three or more developers
+- Side-by-side activity comparison (events per week)
+- Commit activity heatmap beyond GitHub's 90-day event window
+- Per-repository activity page
+
 ## Quality
 - Automated tests for the filter helpers (verified manually in v5)
 - Lighthouse accessibility pass (V9)
-- Automated tests for analytics helpers (verified manually in v6)
+- Automated tests for analytics, event-mapping and activity helpers (verified manually in v6 and v7)

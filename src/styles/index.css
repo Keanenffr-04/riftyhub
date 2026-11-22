@@ -435,3 +435,19 @@ a.tab:hover { color: var(--text); }
 .lang-load { display: flex; flex-direction: column; gap: 12px; }
 .notice-inline { color: #f3c969; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- v7 additions ---------- */
+.compare-summary { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 0; padding: 14px 18px; }
+.overlap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.overlap h3, .mini-heading, .timeline-day h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.mini-heading { margin-top: 8px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.timeline { display: flex; flex-direction: column; gap: 18px; }
+.timeline-day .commit-list { margin: 0; }
+.commit-msg svg { opacity: 0.55; vertical-align: -1px; }
+.explorer-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+
+@media (max-width: 700px) {
+  .overlap { grid-template-columns: minmax(0, 1fr); }
+}

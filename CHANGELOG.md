@@ -1,5 +1,13 @@
 # Changelog
 
+## v7.0.0 – Developer comparison and activity
+- Compare: now 11 metrics (adds original repositories, median stars, pushed in the last 12 months, license coverage, archived), a summary of who leads in how many metrics, language overlap (shared and unique languages), most starred repositories per developer, a swap button, and a Compare button on every profile
+- New Activity page and tab: real public event timeline grouped by day (pushes, pull requests, issues, reviews, comments, stars, forks, releases) with type and repository filters, activity tiles and a daily activity chart
+- Commit explorer: search commit messages, filter by repository and date, paginated "load more" (up to 300 results), total match count; Overview links to it from Recent commits
+- README: new "Quick start: open the app" section at the top with the local server link (http://localhost:5173)
+- No new dependencies. Activity covers GitHub's last 90 days / 300 public events; commit explorer uses GitHub's commit search
+- Adapted from roadmap: the comparison page and recent commits already existed from v2, so v7 extends them
+
 ## v6.0.0 – Advanced analytics
 - Expanded statistics: new "Developer insights" tiles (original vs fork count, median stars, repositories pushed in the last 12 months, license coverage, archived count, first repository year), top topics and license breakdown panels
 - Interactive charts: "Top repositories" can be ranked by stars, forks or open issues; "Activity" switches between repositories created per year and last push by month
