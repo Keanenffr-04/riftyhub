@@ -123,3 +123,28 @@ export async function cached<T>(
   inflight.set(key, promise)
   return promise
 }
+
+/** How many cached GitHub responses are currently held (memory and this tab's storage), not counting expired ones. */
+export function cacheEntryCount(): number {
+  const now = Date.now()
+  const live = new Set<string>()
+  for (const [k, entry] of memory) if (entry.expires > now) live.add(k)
+  try {
+    for (const k of storageKeys([PREFIX])) if (expiryOf(k) > now) live.add(k.slice(PREFIX.length))
+  } catch {
+    /* storage unavailable */
+  }
+  return live.size
+}
+
+/** Removes every cached GitHub response so the next visit to a page loads fresh data. Returns how many were held. */
+export function clearCache(): number {
+  const count = cacheEntryCount()
+  memory.clear()
+  try {
+    for (const k of storageKeys([PREFIX])) sessionStorage.removeItem(k)
+  } catch {
+    /* storage unavailable */
+  }
+  return count
+}

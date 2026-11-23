@@ -38,7 +38,8 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 8. In the **Table** layout, click a column heading (Repository, Stars, Forks, Updated) to sort by it, and click again to reverse. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
 9. The address bar keeps your filters, so you can bookmark or share the filtered page.
 10. **Pinning:** click the pin button on a repository (card or table row) to pin it to the Overview, and click it again to unpin. You can pin up to six per developer.
-11. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
+11. **Languages of one repository:** click **Languages** on a card or table row to see a bar chart of the code in that repository, by language. It uses one GitHub request, only when you open it, and the result is kept for 30 minutes. Click the button again to close it.
+12. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
 
 ### 5. Read the Analytics
 1. Click the **Analytics** tab.
@@ -67,7 +68,8 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 4. Type a name under *New collection name* and click **Create collection** (for example "Mentors" or "Hiring").
 5. Open the **Collections** menu on a saved profile and tick the collections it belongs to.
 6. Use the chips to view All, Favourites or one collection. With a collection selected you can **Rename** or **Delete** it (profiles stay saved).
-7. Search saved profiles, sort them, or tick two profiles and click **Compare selected**.
+7. Click **Add note** on a saved profile to write a private note (up to 500 characters), for example why you saved them. Click **Edit note** to change it, and save an empty note to remove it. Notes show on the card and are found by the search box.
+8. Search saved profiles (names and notes), sort them, or tick two profiles and click **Compare selected**.
 
 ### 9. Make RiftyHub yours
 1. Open **Settings** in the sidebar.
@@ -75,8 +77,9 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 3. **Display**: choose the **Theme** (System, Dark or Light), Comfortable or Compact spacing, and whether Repositories starts as Cards or Table.
    **Repositories page defaults**: choose the sort, its direction and whether forks or archived repositories are hidden when the page opens.
 4. **GitHub token (optional)**: paste a token to raise GitHub's limit (see step 10). **Save and test** checks it with GitHub first; **Remove token** deletes it.
-5. **Backup and restore**: click **Export backup** to download a file with your saved profiles, collections, filter presets, pinned repositories and preferences. **Import backup** adds a backup file to what you already have.
-6. Changes apply immediately and are remembered next time.
+5. **Cached GitHub data**: RiftyHub remembers GitHub's answers for a few minutes to save requests. **Clear cached data** removes them so the next page you open loads fresh data (this uses requests). Your saved profiles, notes and settings are not affected.
+6. **Backup and restore**: click **Export backup** to download a file with your saved profiles (and their notes), collections, filter presets, pinned repositories and preferences. **Import backup** adds a backup file to what you already have.
+7. Changes apply immediately and are remembered next time.
 
 ### 10. Keep an eye on the request limit
 RiftyHub uses GitHub without a login, which allows **60 requests per hour**. The meter at the bottom of the sidebar shows how many you have left. If it runs out, wait until the reset time shown. Data is cached for 10 minutes, so revisiting a page doesn't cost extra requests. Click **Refresh data** on a profile to fetch fresh data.
@@ -120,14 +123,14 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | **Analytics** | Statistics, language breakdowns and charts. |
 | **Activity** | Public event timeline and the commit explorer. |
 | **Compare** | Two developers side by side. |
-| **Saved profiles** | Your favourites and collections. |
-| **Settings** | Layout, display, backup and restore. |
+| **Saved profiles** | Your favourites, collections and notes. |
+| **Settings** | Layout, display, token, cached data, backup and restore. |
 
 ### The parts under the hood
 | Part | Where | What it does |
 | --- | --- | --- |
 | GitHub service | `src/services/github.ts` | Every request to GitHub goes through here: profile, repositories, events, commit search, language bytes. It adds a 15-second timeout, retries temporary failures, stops early when your quota is used up, loads repository pages in parallel and keeps only the fields the app uses. It turns errors into clear messages. |
-| Cache | `src/services/cache.ts` | Remembers responses for 10 minutes (in the browser tab) so repeat visits are instant and don't use your request allowance. Tidies itself: expired entries are removed on start, and the soonest-to-expire entries are dropped if browser storage fills up. |
+| Cache | `src/services/cache.ts` | Remembers responses for 10 minutes (in the browser tab) so repeat visits are instant and don't use your request allowance. Settings can clear it on demand. Tidies itself: expired entries are removed on start, and the soonest-to-expire entries are dropped if browser storage fills up. |
 | Rate-limit meter | `src/services/rateLimit.ts` | Reads GitHub's rate-limit headers and feeds the sidebar meter. |
 | Token | `src/services/token.ts` | Keeps the optional GitHub token in this browser and adds it to requests sent to GitHub. |
 | User layout | `src/components/UserLayout.tsx` | Loads a developer once and shares it with the Overview, Repositories, Analytics and Activity pages, so switching tabs does not reload anything. |
@@ -147,7 +150,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 - **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
 - **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
 - **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
-- **Your data stays with you.** Saved profiles, collections, presets, pins and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
+- **Your data stays with you.** Saved profiles, notes, collections, presets, pins and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
 
 ### Good to know
 - Without a GitHub token, GitHub allows 60 requests per hour and about 10 commit searches per minute. With one: 5,000 per hour and about 30 searches per minute.

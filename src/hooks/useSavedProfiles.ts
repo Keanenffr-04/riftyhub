@@ -4,6 +4,7 @@ import { createPersistentStore } from '../utils/persistentStore'
 import {
   MAX_COLLECTIONS,
   MAX_SAVED,
+  cleanNote,
   collectionNameError,
   inCollection,
   normalizeCollectionName,
@@ -64,6 +65,15 @@ export function useSavedProfiles() {
     updateProfile(login, (p) => ({ ...p, favorite: !p.favorite }))
   }, [])
 
+  /** Saves a note for a profile; an empty note removes it. */
+  const setNote = useCallback((login: string, raw: string) => {
+    const note = cleanNote(raw)
+    updateProfile(login, (p) => {
+      const { note: _old, ...rest } = p
+      return note ? { ...rest, note } : rest
+    })
+  }, [])
+
   const setInCollection = useCallback((login: string, collection: string, member: boolean) => {
     updateProfile(login, (p) => {
       const without = (p.collections ?? []).filter((c) => !same(c, collection))
@@ -103,5 +113,5 @@ export function useSavedProfiles() {
     )
   }, [])
 
-  return { profiles, collections, isSaved, toggle, remove, toggleFavorite, setInCollection, createCollection, renameCollection, deleteCollection }
+  return { profiles, collections, isSaved, toggle, remove, toggleFavorite, setNote, setInCollection, createCollection, renameCollection, deleteCollection }
 }

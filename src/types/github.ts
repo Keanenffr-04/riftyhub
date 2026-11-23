@@ -62,6 +62,8 @@ export interface SavedProfile {
   favorite?: boolean
   /** Names of the collections this profile belongs to. */
   collections?: string[]
+  /** A private note about this developer (up to 500 characters; added in v13). */
+  note?: string
 }
 
 export type ActivityKind = 'push' | 'pull_request' | 'issue' | 'review' | 'comment' | 'create' | 'fork' | 'star' | 'release' | 'other'

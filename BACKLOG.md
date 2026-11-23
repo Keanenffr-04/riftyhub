@@ -7,7 +7,6 @@ Ideas for future versions. Items are moved into a version only when it has room 
 ## Dashboard
 
 ## Analytics / data
-- Per-repository code-size breakdown (click a repository to see its languages)
 - Language trends over time
 - Contributions beyond the 300-repository cap
 
@@ -18,9 +17,7 @@ Ideas for future versions. Items are moved into a version only when it has room 
 - Per-repository activity page
 
 ## Saved profiles
-- Notes on each saved profile
 - Sync across browsers (would need an account or a server)
-- "Clear cached GitHub data" button in Settings
 
 ## Quality
 - Automated tests for the filter helpers (verified manually in v5)

@@ -1,5 +1,7 @@
-import { ArrowDown, ArrowUp, ChevronsUpDown, ExternalLink, GitFork, Pin, Star } from 'lucide-react'
+import { useId, useState } from 'react'
+import { ArrowDown, ArrowUp, BarChart3, ChevronsUpDown, ExternalLink, GitFork, Pin, Star } from 'lucide-react'
 import type { GitHubRepo } from '../types/github'
+import RepoLanguages from './RepoLanguages'
 import type { SortDir, SortKey } from '../utils/repoFilters'
 import { formatCompact, languageColor, timeAgo } from '../utils/format'
 
@@ -28,6 +30,14 @@ function PinButton({ name, pinned, onToggle }: { name: string; pinned: boolean; 
   )
 }
 
+function LanguagesToggle({ name, open, panelId, onToggle }: { name: string; open: boolean; panelId: string; onToggle: () => void }) {
+  return (
+    <button type="button" className={`langs-toggle${open ? ' on' : ''}`} onClick={onToggle} aria-expanded={open} aria-controls={panelId} title="Show the language breakdown">
+      <BarChart3 size={14} aria-hidden="true" /> Languages<span className="sr-only"> of {name}</span>
+    </button>
+  )
+}
+
 const MAX_TOPICS = 4
 
 interface CardProps {
@@ -39,6 +49,8 @@ interface CardProps {
 }
 
 export function RepoCard({ repo, onTopic, pinned = false, onTogglePin }: CardProps) {
+  const [showLanguages, setShowLanguages] = useState(false)
+  const panelId = useId()
   const topics = onTopic ? (repo.topics ?? []).slice(0, MAX_TOPICS) : []
   return (
     <article className="card repo-card">
@@ -72,6 +84,14 @@ export function RepoCard({ repo, onTopic, pinned = false, onTogglePin }: CardPro
         </span>
         <span className="muted updated">Updated {timeAgo(repo.pushed_at ?? repo.updated_at)}</span>
       </footer>
+      <div>
+        <LanguagesToggle name={repo.name} open={showLanguages} panelId={panelId} onToggle={() => setShowLanguages((v) => !v)} />
+      </div>
+      {showLanguages && (
+        <div id={panelId}>
+          <RepoLanguages fullName={repo.full_name} />
+        </div>
+      )}
     </article>
   )
 }
@@ -94,6 +114,48 @@ function SortHeader({ label, column, sort, dir, onSort, num }: SortHeaderProps) 
         {label} <Icon size={13} aria-hidden="true" />
       </button>
     </th>
+  )
+}
+
+interface RowProps {
+  repo: GitHubRepo
+  pinned: boolean
+  onTogglePin?: () => void
+}
+
+function RepoRow({ repo, pinned, onTogglePin }: RowProps) {
+  const [showLanguages, setShowLanguages] = useState(false)
+  const panelId = useId()
+  return (
+    <>
+      <tr>
+        <td>
+          <a className="repo-name" href={repo.html_url} target="_blank" rel="noopener noreferrer">
+            {repo.name}
+          </a>
+          {repo.fork && <span className="tag">Fork</span>}
+          {repo.archived && <span className="tag">Archived</span>}
+          {onTogglePin && <PinButton name={repo.name} pinned={pinned} onToggle={onTogglePin} />}
+          {repo.description && <div className="table-desc">{repo.description}</div>}
+        </td>
+        <td>
+          <Language language={repo.language} />
+          <div>
+            <LanguagesToggle name={repo.name} open={showLanguages} panelId={panelId} onToggle={() => setShowLanguages((v) => !v)} />
+          </div>
+        </td>
+        <td className="num">{formatCompact(repo.stargazers_count)}</td>
+        <td className="num">{formatCompact(repo.forks_count)}</td>
+        <td className="muted nowrap">{timeAgo(repo.pushed_at ?? repo.updated_at)}</td>
+      </tr>
+      {showLanguages && (
+        <tr className="lang-row">
+          <td colSpan={5} id={panelId}>
+            <RepoLanguages fullName={repo.full_name} />
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -122,23 +184,7 @@ export function RepoTable({ repos, sort, dir, onSort, isPinned, onTogglePin }: T
         </thead>
         <tbody>
           {repos.map((repo) => (
-            <tr key={repo.id}>
-              <td>
-                <a className="repo-name" href={repo.html_url} target="_blank" rel="noopener noreferrer">
-                  {repo.name}
-                </a>
-                {repo.fork && <span className="tag">Fork</span>}
-                {repo.archived && <span className="tag">Archived</span>}
-                {onTogglePin && <PinButton name={repo.name} pinned={isPinned?.(repo) ?? false} onToggle={() => onTogglePin(repo)} />}
-                {repo.description && <div className="table-desc">{repo.description}</div>}
-              </td>
-              <td>
-                <Language language={repo.language} />
-              </td>
-              <td className="num">{formatCompact(repo.stargazers_count)}</td>
-              <td className="num">{formatCompact(repo.forks_count)}</td>
-              <td className="muted nowrap">{timeAgo(repo.pushed_at ?? repo.updated_at)}</td>
-            </tr>
+            <RepoRow key={repo.id} repo={repo} pinned={isPinned?.(repo) ?? false} onTogglePin={onTogglePin ? () => onTogglePin(repo) : undefined} />
           ))}
         </tbody>
       </table>

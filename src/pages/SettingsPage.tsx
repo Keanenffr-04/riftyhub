@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { ArrowDown, ArrowUp, Download, GripVertical, KeyRound, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { ArrowDown, ArrowUp, Database, Download, GripVertical, KeyRound, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { usePreferences } from '../hooks/usePreferences'
 import { presetsStore } from '../hooks/usePresets'
 import { pinsStore } from '../hooks/usePins'
@@ -8,6 +8,7 @@ import { getSavedData, replaceSavedData, useSavedProfiles } from '../hooks/useSa
 import { SECTION_INFO, moveSection, moveSectionTo, setSectionVisible, type Density, type RepoDefaults, type RepoView, type SectionId, type ThemePref } from '../utils/preferences'
 import { mergePresets } from '../utils/presets'
 import { SORT_OPTIONS, defaultDir, type SortKey } from '../utils/repoFilters'
+import { cacheEntryCount, clearCache } from '../services/cache'
 import { checkToken } from '../services/github'
 import { isValidTokenFormat, setToken, useToken } from '../services/token'
 import { buildBackup, mergeCollections, mergeProfiles, parseBackup } from '../utils/saved'
@@ -32,6 +33,8 @@ export default function SettingsPage() {
   const [dragId, setDragId] = useState<SectionId | null>(null)
   const [overId, setOverId] = useState<SectionId | null>(null)
   const token = useToken()
+  const [cacheCount, setCacheCount] = useState(() => cacheEntryCount())
+  const [cacheNotice, setCacheNotice] = useState<string | null>(null)
   const [tokenInput, setTokenInput] = useState('')
   const [checking, setChecking] = useState(false)
   const [tokenNotice, setTokenNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
@@ -60,6 +63,16 @@ export default function SettingsPage() {
   function handleRemoveToken() {
     setToken('')
     setTokenNotice({ kind: 'ok', text: 'Token removed from this browser.' })
+  }
+
+  function handleClearCache() {
+    const removed = clearCache()
+    setCacheCount(cacheEntryCount())
+    setCacheNotice(
+      removed === 0
+        ? 'There was nothing cached.'
+        : `Cleared ${removed} cached ${removed === 1 ? 'response' : 'responses'}. Pages load fresh data from GitHub the next time you open them.`,
+    )
   }
 
   function handleExport() {
@@ -283,10 +296,27 @@ export default function SettingsPage() {
         )}
       </section>
 
+      <section className="card panel" aria-labelledby="cache-settings">
+        <h2 id="cache-settings">Cached GitHub data</h2>
+        <p className="muted small">
+          To save requests, RiftyHub keeps GitHub’s answers for a few minutes (10 minutes for most data, 30 for code size) in this browser tab. Clear them to force fresh data on your next visit to a page. Reloading data uses requests from your hourly limit, and your saved profiles, notes, pins and settings are not touched.
+        </p>
+        <div className="controls">
+          <button className="btn" onClick={handleClearCache} disabled={cacheCount === 0}>
+            <Database size={14} /> Clear cached data{cacheCount > 0 ? ` (${cacheCount})` : ''}
+          </button>
+        </div>
+        {cacheNotice && (
+          <p className="muted small" role="status">
+            {cacheNotice}
+          </p>
+        )}
+      </section>
+
       <section className="card panel" aria-labelledby="backup-settings">
         <h2 id="backup-settings">Backup and restore</h2>
         <p className="muted small">
-          Everything is stored in this browser: {profiles.length} saved {profiles.length === 1 ? 'profile' : 'profiles'}, {collections.length}{' '}
+          Everything is stored in this browser: {profiles.length} saved {profiles.length === 1 ? 'profile' : 'profiles'} (with their notes), {collections.length}{' '}
           {collections.length === 1 ? 'collection' : 'collections'}, your filter presets, pinned repositories and your preferences. Export a file to keep a copy or move to another browser. Importing adds to what you already have.
         </p>
         <div className="controls">

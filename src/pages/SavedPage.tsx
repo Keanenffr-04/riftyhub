@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom'
 import { Check, GitCompare, Pencil, Search, Star, Trash2, X } from 'lucide-react'
 import { useSavedProfiles } from '../hooks/useSavedProfiles'
 import { EmptyState } from '../components/States'
+import SavedNote from '../components/SavedNote'
 import { FAVORITES, MAX_COLLECTION_NAME, countFor, inCollection, viewSaved, type SavedSort } from '../utils/saved'
 import { formatDate } from '../utils/format'
 
 export default function SavedPage() {
-  const { profiles, collections, remove, toggleFavorite, setInCollection, createCollection, renameCollection, deleteCollection } = useSavedProfiles()
+  const { profiles, collections, remove, toggleFavorite, setNote, setInCollection, createCollection, renameCollection, deleteCollection } = useSavedProfiles()
   const [query, setQuery] = useState('')
   const [collection, setCollection] = useState('')
   const [sort, setSort] = useState<SavedSort>('recent')
@@ -60,7 +61,7 @@ export default function SavedPage() {
     <div className="stack">
       <div>
         <h1 className="page-title">Saved profiles</h1>
-        <p className="muted">Stored in this browser only. Use favourites and collections to organise them, and back them up from Settings.</p>
+        <p className="muted">Stored in this browser only. Use favourites, collections and notes to organise them, and back them up from Settings.</p>
       </div>
 
       {profiles.length === 0 ? (
@@ -75,7 +76,7 @@ export default function SavedPage() {
             <div className="controls">
               <label className="control-search">
                 <Search size={15} aria-hidden="true" />
-                <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search saved profiles" aria-label="Search saved profiles" />
+                <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search names and notes" aria-label="Search saved profiles by name or note" />
               </label>
               <select className="select" value={sort} onChange={(e) => setSort(e.target.value as SavedSort)} aria-label="Sort saved profiles">
                 <option value="recent">Sort: Recently saved</option>
@@ -192,6 +193,8 @@ export default function SavedPage() {
                       ))}
                     </div>
                   )}
+
+                  <SavedNote login={p.login} note={p.note ?? ''} onSave={(note) => setNote(p.login, note)} />
 
                   <details className="menu">
                     <summary>Collections</summary>

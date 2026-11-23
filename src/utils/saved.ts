@@ -6,6 +6,7 @@ import { sanitizePins, type PinMap } from './pins'
 export const MAX_SAVED = 50
 export const MAX_COLLECTIONS = 20
 export const MAX_COLLECTION_NAME = 30
+export const MAX_NOTE = 500
 /** Filter value meaning "only favourites" (collection names can't collide with it). */
 export const FAVORITES = '__favorites__'
 
@@ -22,6 +23,18 @@ const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
 
 export function normalizeCollectionName(name: string): string {
   return name.replace(/\s+/g, ' ').trim().slice(0, MAX_COLLECTION_NAME)
+}
+
+/** Tidies a note: one kind of line break, no blank-line runs, no outer whitespace, at most MAX_NOTE characters. */
+export function cleanNote(raw: unknown): string {
+  if (typeof raw !== 'string') return ''
+  return raw
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, MAX_NOTE)
+    .trim()
 }
 
 function cleanNames(raw: unknown): string[] {
@@ -46,6 +59,7 @@ export function sanitizeProfiles(raw: unknown): SavedProfile[] {
     const p = item as Partial<SavedProfile> | null
     if (!p || typeof p.login !== 'string' || typeof p.avatar_url !== 'string' || typeof p.savedAt !== 'string') continue
     if (out.some((o) => same(o.login, p.login as string))) continue
+    const note = cleanNote(p.note)
     out.push({
       login: p.login,
       name: typeof p.name === 'string' ? p.name : null,
@@ -53,6 +67,7 @@ export function sanitizeProfiles(raw: unknown): SavedProfile[] {
       savedAt: p.savedAt,
       favorite: p.favorite === true,
       collections: cleanNames(p.collections),
+      ...(note ? { note } : {}),
     })
   }
   return out.slice(0, MAX_SAVED)
@@ -75,7 +90,7 @@ export function viewSaved(profiles: SavedProfile[], view: SavedView): SavedProfi
   const label = (p: SavedProfile) => p.name ?? p.login
 
   return profiles
-    .filter((p) => !q || p.login.toLowerCase().includes(q) || (p.name ?? '').toLowerCase().includes(q))
+    .filter((p) => !q || p.login.toLowerCase().includes(q) || (p.name ?? '').toLowerCase().includes(q) || (p.note ?? '').toLowerCase().includes(q))
     .filter((p) => !view.collection || (view.collection === FAVORITES ? p.favorite : inCollection(p, view.collection)))
     .sort((a, b) => {
       if (view.sort === 'name') return label(a).localeCompare(label(b))
@@ -133,7 +148,7 @@ export function parseBackup(text: string): ParsedBackup {
   }
 }
 
-/** Adds imported profiles to the existing ones; duplicates keep their data and gain the imported collections and favourite flag. */
+/** Adds imported profiles to the existing ones; duplicates keep their data and gain the imported collections and favourite flag (and the imported note, if they have none). */
 export function mergeProfiles(existing: SavedProfile[], incoming: SavedProfile[]): SavedProfile[] {
   const merged = existing.map((p) => ({ ...p }))
   for (const inc of incoming) {
@@ -141,6 +156,7 @@ export function mergeProfiles(existing: SavedProfile[], incoming: SavedProfile[]
     if (match) {
       match.favorite = !!match.favorite || !!inc.favorite
       match.collections = cleanNames([...(match.collections ?? []), ...(inc.collections ?? [])])
+      if (!match.note && inc.note) match.note = inc.note
     } else {
       merged.push({ ...inc })
     }
