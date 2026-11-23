@@ -110,3 +110,8 @@ export function mapEvent(e: RawEvent): ActivityEvent | null {
   if (!e.created_at) return null
   return { id: e.id, repo: e.repo.name, createdAt: e.created_at, ...describe(e) }
 }
+
+/** GitHub's public events come in pages of up to 100, and RiftyHub reads at most this many pages. */
+export const EVENT_PAGES = 3
+/** The most events RiftyHub can load for one developer (GitHub shares at most 300, from the last 90 days). */
+export const EVENT_LIMIT = EVENT_PAGES * 100

@@ -4,6 +4,7 @@ import { Check, GitCompare, Pencil, Search, Star, Trash2, X } from 'lucide-react
 import { useSavedProfiles } from '../hooks/useSavedProfiles'
 import { EmptyState } from '../components/States'
 import SavedNote from '../components/SavedNote'
+import { MAX_COMPARE, compareHref } from '../utils/compare'
 import { FAVORITES, MAX_COLLECTION_NAME, countFor, inCollection, viewSaved, type SavedSort } from '../utils/saved'
 import { formatDate } from '../utils/format'
 
@@ -21,7 +22,7 @@ export default function SavedPage() {
   const activeCollection = collection && collection !== FAVORITES && !collections.some((c) => c.toLowerCase() === collection.toLowerCase()) ? '' : collection
   const visible = useMemo(() => viewSaved(profiles, { query, collection: activeCollection, sort }), [profiles, query, activeCollection, sort])
   const chosen = selected.filter((login) => profiles.some((p) => p.login === login))
-  const canCompare = chosen.length === 2
+  const canCompare = chosen.length >= 2 && chosen.length <= MAX_COMPARE
 
   function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -84,11 +85,15 @@ export default function SavedPage() {
                 <option value="name">Sort: Name A–Z</option>
               </select>
               {canCompare ? (
-                <Link className="btn btn-primary" to={`/compare?a=${encodeURIComponent(chosen[0])}&b=${encodeURIComponent(chosen[1])}`}>
-                  <GitCompare size={15} /> Compare selected
+                <Link className="btn btn-primary" to={compareHref(chosen)}>
+                  <GitCompare size={15} /> Compare selected ({chosen.length})
                 </Link>
               ) : (
-                <span className="muted small">{chosen.length === 0 ? 'Tick two profiles to compare them' : `${chosen.length} selected: pick exactly two to compare`}</span>
+                <span className="muted small">{chosen.length === 0
+                    ? 'Tick two to four profiles to compare them'
+                    : chosen.length === 1
+                      ? '1 selected: pick at least one more to compare'
+                      : `${chosen.length} selected: pick at most ${MAX_COMPARE} to compare`}</span>
               )}
             </div>
 

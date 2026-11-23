@@ -55,11 +55,12 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 3. The **Timeline** lists each event by day. Filter by type (pushes, pull requests, issues, reviews and so on) or by repository, and click **Show more** for older events.
 4. The **Commit explorer** searches every public commit they authored: type words from the commit message, pick a repository and date range, and click **Search**. Click **Load 30 more** for further results.
 
-### 7. Compare two developers
+### 7. Compare developers
 1. Click **Compare** in the sidebar (or the **Compare** button on a profile).
-2. Enter two usernames and click **Compare**. The swap button flips them.
+2. Enter two usernames and click **Compare**. Click **Add developer** to compare a third and a fourth person (the ✕ removes one). With exactly two developers the swap button flips them.
 3. Read the summary line (who leads in how many metrics), the table, the language overlap, and each developer's most starred repositories.
-4. The link in your address bar can be shared.
+4. Click **Compare recent activity** to see events per week for the last 13 weeks, with a chart and a table (commits, pull requests, reviews, active days, busiest week). It uses up to 3 GitHub requests per developer, which is why it only loads when you click. Very busy developers have more events than GitHub shares (300), so their oldest weeks show “—” instead of a number.
+5. The link in your address bar can be shared.
 
 ### 8. Save people you want to come back to
 1. On a profile, click **Save profile**.
@@ -69,7 +70,7 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 5. Open the **Collections** menu on a saved profile and tick the collections it belongs to.
 6. Use the chips to view All, Favourites or one collection. With a collection selected you can **Rename** or **Delete** it (profiles stay saved).
 7. Click **Add note** on a saved profile to write a private note (up to 500 characters), for example why you saved them. Click **Edit note** to change it, and save an empty note to remove it. Notes show on the card and are found by the search box.
-8. Search saved profiles (names and notes), sort them, or tick two profiles and click **Compare selected**.
+8. Search saved profiles (names and notes), sort them, or tick two to four profiles and click **Compare selected**.
 
 ### 9. Make RiftyHub yours
 1. Open **Settings** in the sidebar.
@@ -122,7 +123,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | **Repositories** | Search, filter and sort a developer's repositories. |
 | **Analytics** | Statistics, language breakdowns and charts. |
 | **Activity** | Public event timeline and the commit explorer. |
-| **Compare** | Two developers side by side. |
+| **Compare** | Two to four developers side by side, plus a weekly activity comparison. |
 | **Saved profiles** | Your favourites, collections and notes. |
 | **Settings** | Layout, display, token, cached data, backup and restore. |
 
@@ -149,7 +150,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 - **Heavy parts load only when needed.** The charting library is downloaded the first time you open Analytics or Activity, which keeps the first page load small.
 - **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
 - **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
-- **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
+- **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two to four (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
 - **Your data stays with you.** Saved profiles, notes, collections, presets, pins and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
 
 ### Good to know

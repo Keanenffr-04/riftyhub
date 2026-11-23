@@ -11,8 +11,6 @@ Ideas for future versions. Items are moved into a version only when it has room 
 - Contributions beyond the 300-repository cap
 
 ## Comparison and activity
-- Compare three or more developers
-- Side-by-side activity comparison (events per week)
 - Commit activity heatmap beyond GitHub's 90-day event window
 - Per-repository activity page
 

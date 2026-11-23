@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { GitHubRepo } from '../types/github'
 import type { LanguageStat, MonthBucket } from '../utils/analytics'
 import { useChartPalette } from '../hooks/useTheme'
@@ -146,5 +146,60 @@ export function ActivityChart({ activity, ariaLabel = 'Bar chart of repositories
         ))}
     </ul>
     </>
+  )
+}
+
+/** Line styles that go with the series colours, so developers can be told apart without relying on colour. */
+export const SERIES_DASHES = ['', '6 4', '2 3', '10 3 2 3']
+
+export interface WeeklySeries {
+  /** The developer's username. */
+  name: string
+  /** Events per week; null leaves a gap where GitHub no longer shares that week. */
+  values: (number | null)[]
+}
+
+export function WeeklyCompareChart({ labels, series, ariaLabel }: { labels: string[]; series: WeeklySeries[]; ariaLabel: string }) {
+  const c = useChartPalette()
+  // Each line is keyed by position (u0, u1, …), so a username can never clash with the "label" key.
+  const data = labels.map((label, i) => {
+    const row: Record<string, string | number | null> = { label }
+    series.forEach((s, j) => {
+      row[`u${j}`] = s.values[i]
+    })
+    return row
+  })
+
+  return (
+    <div className="chart-box short" role="img" aria-label={ariaLabel}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ left: -12, right: 8 }}>
+          <CartesianGrid stroke={c.grid} vertical={false} />
+          <XAxis dataKey="label" stroke={c.axis} tick={{ fill: c.axis, fontSize: 12 }} interval="preserveStartEnd" />
+          <YAxis stroke={c.axis} tick={{ fill: c.axis, fontSize: 12 }} allowDecimals={false} />
+          <Tooltip
+            contentStyle={tooltipStyle(c)}
+            itemStyle={tooltipText(c)}
+            labelStyle={tooltipText(c)}
+            labelFormatter={(label) => `Week of ${label}`}
+            formatter={(value, name) => [value === null || value === undefined ? 'Not available' : `${value}`, String(name)]}
+          />
+          {series.map((s, j) => (
+            <Line
+              key={s.name}
+              type="monotone"
+              dataKey={`u${j}`}
+              name={`@${s.name}`}
+              stroke={c.series[j % c.series.length]}
+              strokeWidth={2}
+              strokeDasharray={SERIES_DASHES[j % SERIES_DASHES.length]}
+              dot={{ r: 3 }}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   )
 }

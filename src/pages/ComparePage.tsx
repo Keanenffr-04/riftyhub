@@ -1,13 +1,16 @@
-import { useState, type FormEvent } from 'react'
+import { Suspense, lazy, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeftRight } from 'lucide-react'
-import { isValidUsername } from '../services/github'
+import { Activity, ArrowLeftRight, Plus, X } from 'lucide-react'
 import { useCompare } from '../hooks/useCompare'
 import LanguageBars from '../components/LanguageBars'
 import { describeError } from '../components/States'
 import { computeAnalytics, type Analytics } from '../utils/analytics'
+import { COMPARE_KEYS, MAX_COMPARE, buildCompareParams, languageOverlap, parseCompare, tallyLeads, topIndices } from '../utils/compare'
 import { formatDate, formatNumber } from '../utils/format'
 import type { UserData } from '../types/github'
+
+// The charting library is large, so the activity comparison is only downloaded when it is asked for.
+const CompareActivity = lazy(() => import('../components/CompareActivity'))
 
 interface Side extends UserData {
   stats: Analytics
@@ -31,17 +34,14 @@ const numericRows: { label: string; get: (s: Side) => number; fmt?: (n: number) 
   { label: 'Archived repositories', get: (s) => s.stats.archivedCount, higherWins: false },
 ]
 
-function Results({ a, b }: { a: string; b: string }) {
-  const state = useCompare(a, b)
+function Results({ users }: { users: string[] }) {
+  const state = useCompare(users)
 
   if (state.status === 'loading') {
     return <div className="skeleton" style={{ height: 380, borderRadius: 14 }} role="status" aria-label="Loading comparison" />
   }
 
-  const failures = [
-    { name: a, result: state.a },
-    { name: b, result: state.b },
-  ].flatMap((s) => (s.result.status === 'error' ? [{ name: s.name, error: s.result.error }] : []))
+  const failures = state.results.flatMap((r, i) => (r.status === 'error' ? [{ name: users[i], error: r.error }] : []))
 
   if (failures.length > 0) {
     return (
@@ -59,34 +59,29 @@ function Results({ a, b }: { a: string; b: string }) {
       </div>
     )
   }
-  if (state.a.status !== 'ok' || state.b.status !== 'ok') return null
 
-  const left = toSide(state.a.data)
-  const right = toSide(state.b.data)
+  const sides = state.results.flatMap((r) => (r.status === 'ok' ? [toSide(r.data)] : []))
+  if (sides.length !== users.length) return null
 
-  // Tally who has the higher value across the metrics where higher is meaningful; equal values are ties.
+  // Tally who has the single highest value across the metrics where higher is meaningful; a shared top spot is undecided.
   const scored = numericRows.filter((r) => r.higherWins)
-  const leftWins = scored.filter((r) => r.get(left) > r.get(right)).length
-  const rightWins = scored.filter((r) => r.get(right) > r.get(left)).length
-  const ties = scored.length - leftWins - rightWins
-
-  const leftNames = new Set(left.stats.languages.map((l) => l.name))
-  const rightNames = new Set(right.stats.languages.map((l) => l.name))
-  const shared = left.stats.languages.filter((l) => rightNames.has(l.name)).map((l) => l.name)
-  const onlyLeft = left.stats.languages.filter((l) => !rightNames.has(l.name)).map((l) => l.name)
-  const onlyRight = right.stats.languages.filter((l) => !leftNames.has(l.name)).map((l) => l.name)
+  const { leads, undecided } = tallyLeads(
+    scored.map((r) => sides.map((s) => r.get(s))),
+    sides.length,
+  )
+  const overlap = languageOverlap(sides.map((s) => s.stats.languages.map((l) => l.name)))
+  const pair = sides.length === 2
 
   return (
     <div className="stack">
       <p className="card compare-summary" aria-live="polite">
-        <span>
-          <strong>@{left.user.login}</strong> leads in {leftWins}
-        </span>
-        <span>
-          <strong>@{right.user.login}</strong> leads in {rightWins}
-        </span>
+        {sides.map((s, i) => (
+          <span key={s.user.login}>
+            <strong>@{s.user.login}</strong> leads in {leads[i]}
+          </span>
+        ))}
         <span className="muted">
-          {ties} tied · {scored.length} metrics compared
+          {undecided} {pair ? 'tied' : 'without a single leader'} · {scored.length} metrics compared
         </span>
       </p>
 
@@ -95,7 +90,7 @@ function Results({ a, b }: { a: string; b: string }) {
           <thead>
             <tr>
               <td />
-              {[left, right].map((s) => (
+              {sides.map((s) => (
                 <th key={s.user.login} scope="col">
                   <Link to={`/u/${s.user.login}`} className="compare-user">
                     <img src={s.user.avatar_url} alt="" width={44} height={44} loading="lazy" decoding="async" />
@@ -110,54 +105,64 @@ function Results({ a, b }: { a: string; b: string }) {
           </thead>
           <tbody>
             {numericRows.map((row) => {
-              const va = row.get(left)
-              const vb = row.get(right)
+              const values = sides.map((s) => row.get(s))
+              const top = row.higherWins ? topIndices(values) : []
               const fmt = row.fmt ?? formatNumber
-              const decided = row.higherWins && va !== vb
               return (
                 <tr key={row.label}>
                   <th scope="row">{row.label}</th>
-                  <td className={decided && va > vb ? 'win' : undefined}>{fmt(va)}</td>
-                  <td className={decided && vb > va ? 'win' : undefined}>{fmt(vb)}</td>
+                  {values.map((v, i) => (
+                    <td key={sides[i].user.login} className={top.includes(i) ? 'win' : undefined}>
+                      {fmt(v)}
+                    </td>
+                  ))}
                 </tr>
               )
             })}
             <tr>
               <th scope="row">Top language</th>
-              <td>{left.stats.topLanguage ?? '—'}</td>
-              <td>{right.stats.topLanguage ?? '—'}</td>
+              {sides.map((s) => (
+                <td key={s.user.login}>{s.stats.topLanguage ?? '—'}</td>
+              ))}
             </tr>
             <tr>
               <th scope="row">Joined</th>
-              <td>{formatDate(left.user.created_at)}</td>
-              <td>{formatDate(right.user.created_at)}</td>
+              {sides.map((s) => (
+                <td key={s.user.login}>{formatDate(s.user.created_at)}</td>
+              ))}
             </tr>
           </tbody>
         </table>
       </div>
-      <p className="muted small">Highlighted values are the higher of the two (not shown for following, original and archived counts, where higher is not better or worse). Repository statistics use up to 300 public repositories each.</p>
+      <p className="muted small">
+        Highlighted values are the highest{pair ? ' of the two' : ''} (nothing is highlighted when everyone has the same value, or for following, original and archived counts, where higher is not better or worse). Repository statistics use up to 300 public repositories each.
+      </p>
 
       <section className="card panel" aria-labelledby="overlap-heading">
         <h2 id="overlap-heading">Language overlap</h2>
         <p className="muted small">Primary languages of original repositories.</p>
         <div className="overlap">
           <div>
-            <h3>Both use</h3>
-            <div className="pills">{shared.length ? shared.map((n) => <span key={n} className="tag">{n}</span>) : <span className="muted small">No languages in common</span>}</div>
+            <h3>{pair ? 'Both use' : `All ${sides.length} use`}</h3>
+            <PillList names={overlap.common} empty="No languages in common" />
           </div>
-          <div>
-            <h3>Only @{left.user.login}</h3>
-            <div className="pills">{onlyLeft.length ? onlyLeft.map((n) => <span key={n} className="tag">{n}</span>) : <span className="muted small">None</span>}</div>
-          </div>
-          <div>
-            <h3>Only @{right.user.login}</h3>
-            <div className="pills">{onlyRight.length ? onlyRight.map((n) => <span key={n} className="tag">{n}</span>) : <span className="muted small">None</span>}</div>
-          </div>
+          {!pair && (
+            <div>
+              <h3>Shared by some</h3>
+              <PillList names={overlap.some} empty="None" />
+            </div>
+          )}
+          {sides.map((s, i) => (
+            <div key={s.user.login}>
+              <h3>Only @{s.user.login}</h3>
+              <PillList names={overlap.only[i]} empty="None" />
+            </div>
+          ))}
         </div>
       </section>
 
       <div className="compare-langs">
-        {[left, right].map((s) => (
+        {sides.map((s) => (
           <section key={s.user.login} className="card panel">
             <h2>@{s.user.login} languages</h2>
             <LanguageBars languages={s.stats.languages} limit={6} />
@@ -179,70 +184,154 @@ function Results({ a, b }: { a: string; b: string }) {
           </section>
         ))}
       </div>
+
+      <ActivityGate users={users} />
     </div>
   )
 }
 
+function PillList({ names, empty }: { names: string[]; empty: string }) {
+  return (
+    <div className="pills">
+      {names.length ? (
+        names.map((n) => (
+          <span key={n} className="tag">
+            {n}
+          </span>
+        ))
+      ) : (
+        <span className="muted small">{empty}</span>
+      )}
+    </div>
+  )
+}
+
+/** The activity comparison costs up to 3 GitHub requests per developer, so it only loads when asked for. */
+function ActivityGate({ users }: { users: string[] }) {
+  const [started, setStarted] = useState(false)
+  return (
+    <section className="card panel" aria-labelledby="activity-compare-heading">
+      <h2 id="activity-compare-heading">Recent activity</h2>
+      {started ? (
+        <Suspense fallback={<div className="skeleton" style={{ height: 300, borderRadius: 14 }} role="status" aria-label="Loading activity comparison" />}>
+          <CompareActivity users={users} />
+        </Suspense>
+      ) : (
+        <>
+          <p className="muted small">
+            Compare public activity week by week: events, commits, pull requests, reviews and more over the last 13 weeks. This makes up to 3 GitHub requests per developer ({users.length * 3} here), so it only loads when you ask.
+          </p>
+          <div className="controls">
+            <button type="button" className="btn" onClick={() => setStarted(true)}>
+              <Activity size={14} aria-hidden="true" /> Compare recent activity
+            </button>
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+const PROBLEMS = {
+  invalid: 'One of those isn’t a valid GitHub username. Usernames use letters, numbers and single hyphens, up to 39 characters.',
+  duplicate: 'Each developer can only be added once.',
+  too_few: 'Enter at least two GitHub usernames.',
+} as const
+
 export default function ComparePage() {
   const [params, setParams] = useSearchParams()
-  const a = (params.get('a') ?? '').trim()
-  const b = (params.get('b') ?? '').trim()
-  const [first, setFirst] = useState(a)
-  const [second, setSecond] = useState(b)
+  const fromLink = parseCompare(COMPARE_KEYS.map((k) => params.get(k)))
+  // Start with the names from the link (at least two boxes), and let people add up to four.
+  const [fields, setFields] = useState<string[]>(() => {
+    const given = COMPARE_KEYS.map((k) => (params.get(k) ?? '').trim()).filter(Boolean)
+    return given.length >= 2 ? given : [...given, ...new Array<string>(2 - given.length).fill('')]
+  })
+  const [justAdded, setJustAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const setField = (i: number, value: string) => setFields((f) => f.map((x, j) => (j === i ? value : x)))
+
+  function handleAdd() {
+    setFields((f) => (f.length < MAX_COMPARE ? [...f, ''] : f))
+    setJustAdded(true)
+  }
+
+  function handleRemove(i: number) {
+    setFields((f) => f.filter((_, j) => j !== i))
+    setJustAdded(false)
+  }
+
   function handleSwap() {
-    setFirst(second)
-    setSecond(first)
-    if (a && b) setParams({ a: b, b: a })
+    const [x, y] = fields
+    setFields([y, x])
+    if (fromLink.problem === null && fromLink.users.length === 2) setParams(buildCompareParams([fromLink.users[1], fromLink.users[0]]))
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const x = first.trim().replace(/^@/, '')
-    const y = second.trim().replace(/^@/, '')
-    if (!isValidUsername(x) || !isValidUsername(y)) {
-      setError('Enter two valid GitHub usernames.')
-      return
-    }
-    if (x.toLowerCase() === y.toLowerCase()) {
-      setError('Choose two different users.')
+    const parsed = parseCompare(fields)
+    if (parsed.problem) {
+      setError(PROBLEMS[parsed.problem])
       return
     }
     setError(null)
-    setParams({ a: x, b: y })
+    setParams(buildCompareParams(parsed.users))
   }
+
+  // A link with unusable names explains itself; a link with only one name (from a profile) just waits for the second.
+  const linkProblem = fromLink.problem === 'invalid' || fromLink.problem === 'duplicate' ? PROBLEMS[fromLink.problem] : null
 
   return (
     <div className="stack">
       <div>
         <h1 className="page-title">Compare developers</h1>
-        <p className="muted">See two GitHub profiles side by side.</p>
+        <p className="muted">See two to four GitHub profiles side by side.</p>
       </div>
 
       <form className="compare-form" onSubmit={handleSubmit}>
-        <label>
-          <span className="sr-only">First username</span>
-          <input type="text" value={first} onChange={(e) => setFirst(e.target.value)} placeholder="First username" autoComplete="off" autoCapitalize="none" spellCheck={false} />
-        </label>
-        <label>
-          <span className="sr-only">Second username</span>
-          <input type="text" value={second} onChange={(e) => setSecond(e.target.value)} placeholder="Second username" autoComplete="off" autoCapitalize="none" spellCheck={false} />
-        </label>
-        <button type="button" className="btn icon-only" onClick={handleSwap} aria-label="Swap the two developers" title="Swap">
-          <ArrowLeftRight size={16} />
-        </button>
+        {fields.map((value, i) => (
+          <div key={i} className="compare-field">
+            <label>
+              <span className="sr-only">{['First', 'Second', 'Third', 'Fourth'][i]} username</span>
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setField(i, e.target.value)}
+                placeholder={`${['First', 'Second', 'Third', 'Fourth'][i]} username`}
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                autoFocus={justAdded && i === fields.length - 1}
+              />
+            </label>
+            {i >= 2 && (
+              <button type="button" className="btn icon-only" onClick={() => handleRemove(i)} aria-label={`Remove the ${['first', 'second', 'third', 'fourth'][i]} developer`} title="Remove">
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        ))}
+        {fields.length === 2 && (
+          <button type="button" className="btn icon-only" onClick={handleSwap} aria-label="Swap the two developers" title="Swap">
+            <ArrowLeftRight size={16} />
+          </button>
+        )}
+        {fields.length < MAX_COMPARE && (
+          <button type="button" className="btn" onClick={handleAdd}>
+            <Plus size={15} aria-hidden="true" /> Add developer
+          </button>
+        )}
         <button type="submit" className="btn btn-primary">
           Compare
         </button>
       </form>
-      {error && (
+      {(error ?? linkProblem) && (
         <p className="field-error" role="alert">
-          {error}
+          {error ?? linkProblem}
         </p>
       )}
 
-      {isValidUsername(a) && isValidUsername(b) && a.toLowerCase() !== b.toLowerCase() && <Results a={a} b={b} />}
+      {fromLink.problem === null && <Results key={fromLink.users.join('|')} users={fromLink.users} />}
     </div>
   )
 }

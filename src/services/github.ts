@@ -1,5 +1,5 @@
 import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHubUser } from '../types/github'
-import { mapEvent, type RawEvent } from '../utils/events'
+import { EVENT_PAGES, mapEvent, type RawEvent } from '../utils/events'
 import { cached } from './cache'
 import { slimRepo } from '../utils/slim'
 import { getRateLimit, setRateLimit } from './rateLimit'
@@ -24,11 +24,7 @@ export class GitHubError extends Error {
   }
 }
 
-const USERNAME_PATTERN = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i
-
-export function isValidUsername(value: string): boolean {
-  return USERNAME_PATTERN.test(value)
-}
+export { isValidUsername } from '../utils/username'
 
 export const toGitHubError = (err: unknown): GitHubError =>
   err instanceof GitHubError ? err : new GitHubError('unknown', 'Something went wrong.')
@@ -203,9 +199,7 @@ export function getRecentCommits(username: string, force = false): Promise<GitHu
   )
 }
 
-/** Safety cap: 3 pages × 100 = the 300 most recent public events GitHub makes available (last 90 days). */
-const EVENT_PAGES = 3
-
+/** Safety cap: EVENT_PAGES × 100 = the 300 most recent public events GitHub makes available (last 90 days). */
 /** The user's recent public activity (pushes, pull requests, issues, reviews, …), newest first. */
 export function getUserEvents(username: string, force = false): Promise<ActivityEvent[]> {
   return cached(

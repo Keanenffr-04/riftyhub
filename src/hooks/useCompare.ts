@@ -3,7 +3,8 @@ import { GitHubError, getRepos, getUser, toGitHubError } from '../services/githu
 import type { UserData } from '../types/github'
 
 export type SideResult = { status: 'ok'; data: UserData } | { status: 'error'; error: GitHubError }
-export type CompareState = { status: 'loading' } | { status: 'done'; a: SideResult; b: SideResult }
+/** `results` has one entry per developer, in the order they were given. */
+export type CompareState = { status: 'loading' } | { status: 'done'; results: SideResult[] }
 
 async function load(username: string): Promise<SideResult> {
   try {
@@ -14,19 +15,20 @@ async function load(username: string): Promise<SideResult> {
   }
 }
 
-export function useCompare(a: string, b: string): CompareState {
+export function useCompare(users: string[]): CompareState {
   const [state, setState] = useState<CompareState>({ status: 'loading' })
+  const key = users.join('|')
 
   useEffect(() => {
     let cancelled = false
     setState({ status: 'loading' })
-    Promise.all([load(a), load(b)]).then(([ra, rb]) => {
-      if (!cancelled) setState({ status: 'done', a: ra, b: rb })
+    Promise.all(key.split('|').map(load)).then((results) => {
+      if (!cancelled) setState({ status: 'done', results })
     })
     return () => {
       cancelled = true
     }
-  }, [a, b])
+  }, [key])
 
   return state
 }

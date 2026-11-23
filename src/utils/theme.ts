@@ -18,10 +18,12 @@ export interface ChartPalette {
   tooltipText: string
   other: string
   cursor: string
+  /** Line colours for comparing up to four developers; each is clearly visible on its theme's background. */
+  series: string[]
 }
 
 /** Charts are drawn by Recharts with plain colour values, so they get their own copy of each theme's colours. */
 export const CHART_PALETTES: Record<ResolvedTheme, ChartPalette> = {
-  dark: { accent: '#8b5cf6', axis: '#8d8d9c', grid: '#26262f', tooltipBg: '#1a1a22', tooltipBorder: '#34343f', tooltipText: '#ececf2', other: '#4b4b59', cursor: 'rgba(139,92,246,0.08)' },
-  light: { accent: '#7c3aed', axis: '#5e5e70', grid: '#e0e0ea', tooltipBg: '#ffffff', tooltipBorder: '#c9c9d8', tooltipText: '#17171f', other: '#9a9aab', cursor: 'rgba(124,58,237,0.08)' },
+  dark: { accent: '#8b5cf6', axis: '#8d8d9c', grid: '#26262f', tooltipBg: '#1a1a22', tooltipBorder: '#34343f', tooltipText: '#ececf2', other: '#4b4b59', cursor: 'rgba(139,92,246,0.08)', series: ['#8b5cf6', '#34d399', '#fbbf24', '#38bdf8'] },
+  light: { accent: '#7c3aed', axis: '#5e5e70', grid: '#e0e0ea', tooltipBg: '#ffffff', tooltipBorder: '#c9c9d8', tooltipText: '#17171f', other: '#9a9aab', cursor: 'rgba(124,58,237,0.08)', series: ['#7c3aed', '#047857', '#b45309', '#0369a1'] },
 }
