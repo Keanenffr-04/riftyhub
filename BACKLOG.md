@@ -3,13 +3,9 @@
 Ideas for future versions. Items are moved into a version only when it has room (max two major improvements per version).
 
 ## Repository explorer
-- Sortable table column headers (click Stars / Updated to sort)
-- Search operators such as `stars:>100` and `lang:python`
-- Saved filter presets
 
 ## Dashboard
 - Light theme and theme switcher
-- Default sort and filters for the Repositories page as a preference
 - Drag-and-drop reordering of Overview sections
 - Keyboard shortcut to focus the search box
 - Pinned repositories on the Overview page

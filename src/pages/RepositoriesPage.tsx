@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, LayoutGrid, List, Search, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, LayoutGrid, List, Save, Search, X } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
 import { usePreferences } from '../hooks/usePreferences'
+import { usePresets } from '../hooks/usePresets'
 import { RepoCard, RepoTable } from '../components/RepoViews'
 import { EmptyState } from '../components/States'
 import { MAX_REPO_PAGES } from '../services/github'
+import { baseFilters } from '../utils/preferences'
+import { MAX_PRESET_NAME, type FilterPreset } from '../utils/presets'
+import { parseQuery } from '../utils/searchQuery'
 import {
   NO_LICENSE,
   SORT_OPTIONS,
@@ -14,7 +18,7 @@ import {
   applyFilters,
   collectOptions,
   countActiveFilters,
-  defaultDir,
+  defaultDirFor,
   parseFilters,
   serializeFilters,
   type RepoFilters,
@@ -41,9 +45,34 @@ export default function RepositoriesPage() {
   const [view, setView] = useState<View>(preferences.repoView)
 
   // Filters live in the URL, so a filtered view can be bookmarked, shared and used with the back button.
-  const filters = useMemo(() => parseFilters(params), [params])
-  const update = (patch: Partial<RepoFilters>) => setParams(serializeFilters({ ...filters, ...patch }), { replace: true })
-  const changeSort = (sort: SortKey) => update({ sort, dir: defaultDir(sort) })
+  // Anything the address does not mention starts from the defaults chosen in Settings.
+  const base = useMemo(() => baseFilters(preferences.repoDefaults), [preferences.repoDefaults])
+  const filters = useMemo(() => parseFilters(params, base), [params, base])
+  const update = (patch: Partial<RepoFilters>) => setParams(serializeFilters({ ...filters, ...patch }, base), { replace: true })
+  const changeSort = (sort: SortKey) => update({ sort, dir: defaultDirFor(sort, base) })
+  const sortByColumn = (sort: SortKey) => (sort === filters.sort ? update({ dir: filters.dir === 'asc' ? 'desc' : 'asc' }) : changeSort(sort))
+
+  // Saved filter presets. A preset is a complete view, so it is read against the built-in defaults.
+  const { presets, save: savePreset, remove: removePreset } = usePresets()
+  const currentView = serializeFilters(filters).toString()
+  const canonical = (p: FilterPreset) => serializeFilters(parseFilters(new URLSearchParams(p.params))).toString()
+  const applyPreset = (p: FilterPreset) => setParams(serializeFilters(parseFilters(new URLSearchParams(p.params)), base), { replace: true })
+  const [naming, setNaming] = useState(false)
+  const [presetName, setPresetName] = useState('')
+  const [presetNote, setPresetNote] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  function handleSavePreset(e: FormEvent) {
+    e.preventDefault()
+    const result = savePreset(presetName, currentView)
+    if (!result.ok) {
+      setPresetNote({ kind: 'error', text: result.error })
+      return
+    }
+    setPresetNote({ kind: 'ok', text: result.replaced ? `Preset “${presetName.trim()}” updated.` : `Preset “${presetName.trim()}” saved.` })
+    setNaming(false)
+    setPresetName('')
+  }
+
+  const parsedQuery = useMemo(() => parseQuery(filters.query), [filters.query])
   const clearAll = () => update({ query: '', language: '', topic: '', license: '', minStars: 0, updated: '', hideForks: false, hideArchived: false })
 
   // The search box keeps its own text and updates the URL shortly after typing stops.
@@ -128,8 +157,8 @@ export default function RepositoriesPage() {
               type="text"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Search name, description, language or topic"
-              aria-label="Search repositories by name, description, language or topic"
+              placeholder="Search, or try stars:>100 lang:python"
+              aria-label="Search repositories. Words match name, description, language or topic; operators such as stars:>100 narrow the list."
             />
           </label>
           <select className="select" value={filters.sort} onChange={(e) => changeSort(e.target.value as SortKey)} aria-label="Sort repositories by">
@@ -148,6 +177,24 @@ export default function RepositoriesPage() {
             {filters.dir === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
           </button>
         </div>
+
+        {parsedQuery.ignored.length > 0 && (
+          <p className="small notice-inline" role="status">
+            Not understood, so ignored: {parsedQuery.ignored.join(', ')}. Open “Search tips” for the supported forms.
+          </p>
+        )}
+        <details className="op-help">
+          <summary>Search tips</summary>
+          <p className="muted small">Plain words must appear in the name, description, language or topics. Operators narrow the list further and can be combined. Put a minus in front to exclude (-is:fork).</p>
+          <ul className="op-list small">
+            <li><code>stars:&gt;100</code> <code>forks:&lt;=5</code> <code>issues:0</code> <code>stars:10..50</code> numbers: more than, at most, exactly, a range</li>
+            <li><code>lang:python</code> <code>lang:&quot;jupyter notebook&quot;</code> <code>lang:none</code> language</li>
+            <li><code>topic:react</code> <code>license:mit</code> <code>license:none</code> topic and license</li>
+            <li><code>is:fork</code> <code>is:source</code> <code>is:archived</code> kind of repository</li>
+            <li><code>pushed:&gt;2024-06-01</code> <code>created:2023</code> <code>pushed:2024-01..2024-06</code> dates: a day, month or year</li>
+            <li><code>name:api</code> <code>desc:cli</code> only the name or only the description</li>
+          </ul>
+        </details>
 
         <div className="controls">
           <select className="select" value={filters.language} onChange={(e) => update({ language: e.target.value })} aria-label="Filter by language">
@@ -215,6 +262,62 @@ export default function RepositoriesPage() {
             )}
           </div>
         )}
+
+        <div className="presets">
+          <span className="muted small" id="presets-label">
+            Presets
+          </span>
+          {presets.length === 0 && !naming && <span className="muted small">None yet. Set up a search, then save it here.</span>}
+          {presets.length > 0 && (
+            <ul className="preset-list" aria-labelledby="presets-label">
+              {presets.map((p) => {
+                const active = canonical(p) === currentView
+                return (
+                  <li key={p.id} className={`preset${active ? ' active' : ''}`}>
+                    <button type="button" className="preset-apply" onClick={() => applyPreset(p)} aria-pressed={active}>
+                      {p.name}
+                    </button>
+                    <button type="button" className="preset-delete" onClick={() => removePreset(p.id)} aria-label={`Delete preset ${p.name}`}>
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          {naming ? (
+            <form className="preset-form" onSubmit={handleSavePreset}>
+              <label className="sr-only" htmlFor="preset-name">
+                Preset name
+              </label>
+              <input id="preset-name" className="text-input" value={presetName} maxLength={MAX_PRESET_NAME} onChange={(e) => setPresetName(e.target.value)} placeholder="Preset name" autoFocus />
+              <button type="submit" className="btn btn-primary">
+                Save
+              </button>
+              <button type="button" className="btn" onClick={() => setNaming(false)}>
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="btn"
+              disabled={currentView === ''}
+              onClick={() => {
+                setPresetNote(null)
+                setNaming(true)
+              }}
+              title={currentView === '' ? 'Change a filter or the sort first' : undefined}
+            >
+              <Save size={14} /> Save current view
+            </button>
+          )}
+        </div>
+        {presetNote && (
+          <p className={presetNote.kind === 'error' ? 'field-error' : 'muted small'} role={presetNote.kind === 'error' ? 'alert' : 'status'}>
+            {presetNote.text}
+          </p>
+        )}
       </div>
 
       {truncated && (
@@ -240,7 +343,7 @@ export default function RepositoriesPage() {
           ))}
         </div>
       ) : (
-        <RepoTable repos={shownRepos} />
+        <RepoTable repos={shownRepos} sort={filters.sort} dir={filters.dir} onSort={sortByColumn} />
       )}
 
       {visible.length > shownRepos.length && (

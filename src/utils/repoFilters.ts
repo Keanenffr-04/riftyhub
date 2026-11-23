@@ -1,4 +1,5 @@
 import type { GitHubRepo } from '../types/github'
+import { parseQuery } from './searchQuery'
 
 export type SortKey = 'pushed' | 'created' | 'stars' | 'forks' | 'issues' | 'name'
 export type SortDir = 'asc' | 'desc'
@@ -45,6 +46,9 @@ const WINDOW_DAYS: Record<'30d' | '6m' | '1y', number> = { '30d': 30, '6m': 183,
 /** Name sorts A→Z by default; every numeric/date sort starts with the largest or newest. */
 export const defaultDir = (sort: SortKey): SortDir => (sort === 'name' ? 'asc' : 'desc')
 
+/** Direction a sort starts in: the user's own default if it is their default sort, otherwise the usual one. */
+export const defaultDirFor = (sort: SortKey, base: RepoFilters): SortDir => (sort === base.sort ? base.dir : defaultDir(sort))
+
 export const DEFAULT_FILTERS: RepoFilters = {
   query: '',
   language: '',
@@ -61,13 +65,18 @@ export const DEFAULT_FILTERS: RepoFilters = {
 const SORT_KEYS = SORT_OPTIONS.map((o) => o.value)
 const UPDATED_KEYS = UPDATED_OPTIONS.map((o) => o.value)
 
-export function parseFilters(params: URLSearchParams): RepoFilters {
+/**
+ * Reads filters from the URL. Anything the URL does not mention falls back to `base`, which is the
+ * built-in defaults or, on the Repositories page, the defaults chosen in Settings.
+ */
+export function parseFilters(params: URLSearchParams, base: RepoFilters = DEFAULT_FILTERS): RepoFilters {
   const sortParam = params.get('sort') as SortKey | null
-  const sort = sortParam && SORT_KEYS.includes(sortParam) ? sortParam : DEFAULT_FILTERS.sort
+  const sort = sortParam && SORT_KEYS.includes(sortParam) ? sortParam : base.sort
   const dirParam = params.get('dir')
-  const dir: SortDir = dirParam === 'asc' || dirParam === 'desc' ? dirParam : defaultDir(sort)
+  const dir: SortDir = dirParam === 'asc' || dirParam === 'desc' ? dirParam : defaultDirFor(sort, base)
   const updatedParam = params.get('updated') as UpdatedWindow | null
   const stars = Number(params.get('stars'))
+  const flag = (name: string, fallback: boolean) => (params.get(name) === 'hide' ? true : params.get(name) === 'show' ? false : fallback)
 
   return {
     query: params.get('q') ?? '',
@@ -76,15 +85,15 @@ export function parseFilters(params: URLSearchParams): RepoFilters {
     license: params.get('license') ?? '',
     minStars: STAR_OPTIONS.includes(stars) ? stars : 0,
     updated: updatedParam && UPDATED_KEYS.includes(updatedParam) ? updatedParam : '',
-    hideForks: params.get('forks') === 'hide',
-    hideArchived: params.get('archived') === 'hide',
+    hideForks: flag('forks', base.hideForks),
+    hideArchived: flag('archived', base.hideArchived),
     sort,
     dir,
   }
 }
 
-/** Only non-default values are written, so the URL stays short and shareable. */
-export function serializeFilters(f: RepoFilters): URLSearchParams {
+/** Only values that differ from `base` are written, so the URL stays short. */
+export function serializeFilters(f: RepoFilters, base: RepoFilters = DEFAULT_FILTERS): URLSearchParams {
   const p = new URLSearchParams()
   if (f.query) p.set('q', f.query)
   if (f.language) p.set('lang', f.language)
@@ -92,10 +101,10 @@ export function serializeFilters(f: RepoFilters): URLSearchParams {
   if (f.license) p.set('license', f.license)
   if (f.minStars) p.set('stars', String(f.minStars))
   if (f.updated) p.set('updated', f.updated)
-  if (f.hideForks) p.set('forks', 'hide')
-  if (f.hideArchived) p.set('archived', 'hide')
-  if (f.sort !== DEFAULT_FILTERS.sort) p.set('sort', f.sort)
-  if (f.dir !== defaultDir(f.sort)) p.set('dir', f.dir)
+  if (f.hideForks !== base.hideForks) p.set('forks', f.hideForks ? 'hide' : 'show')
+  if (f.hideArchived !== base.hideArchived) p.set('archived', f.hideArchived ? 'hide' : 'show')
+  if (f.sort !== base.sort) p.set('sort', f.sort)
+  if (f.dir !== defaultDirFor(f.sort, base)) p.set('dir', f.dir)
   return p
 }
 
@@ -123,10 +132,10 @@ function compareBy(sort: SortKey, a: GitHubRepo, b: GitHubRepo): number {
   }
 }
 
-function matchesQuery(repo: GitHubRepo, tokens: string[]): boolean {
-  if (tokens.length === 0) return true
+function matchesTerms(repo: GitHubRepo, terms: string[]): boolean {
+  if (terms.length === 0) return true
   const haystack = [repo.name, repo.description ?? '', repo.language ?? '', ...(repo.topics ?? [])].join(' ').toLowerCase()
-  return tokens.every((t) => haystack.includes(t))
+  return terms.every((t) => haystack.includes(t))
 }
 
 function matchesUpdated(repo: GitHubRepo, window: UpdatedWindow, now: number): boolean {
@@ -136,9 +145,9 @@ function matchesUpdated(repo: GitHubRepo, window: UpdatedWindow, now: number): b
   return age <= WINDOW_DAYS[window] * DAY
 }
 
-/** Every word in the search box must appear in the name, description, language or topics. */
+/** Plain words in the search box must appear in the name, description, language or topics; operators (stars:>100) narrow further. */
 export function applyFilters(repos: GitHubRepo[], f: RepoFilters): GitHubRepo[] {
-  const tokens = f.query.toLowerCase().split(/\s+/).filter(Boolean)
+  const { terms, conditions } = parseQuery(f.query)
   const now = Date.now()
   const direction = f.dir === 'asc' ? 1 : -1
 
@@ -150,7 +159,8 @@ export function applyFilters(repos: GitHubRepo[], f: RepoFilters): GitHubRepo[] 
     .filter((r) => !f.license || (f.license === NO_LICENSE ? !r.license : r.license?.name === f.license))
     .filter((r) => r.stargazers_count >= f.minStars)
     .filter((r) => matchesUpdated(r, f.updated, now))
-    .filter((r) => matchesQuery(r, tokens))
+    .filter((r) => matchesTerms(r, terms))
+    .filter((r) => conditions.every((c) => c.test(r)))
     .sort((a, b) => direction * compareBy(f.sort, a, b) || a.name.localeCompare(b.name))
 }
 

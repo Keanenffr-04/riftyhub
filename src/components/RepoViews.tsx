@@ -1,5 +1,6 @@
-import { ExternalLink, GitFork, Star } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, ExternalLink, GitFork, Star } from 'lucide-react'
 import type { GitHubRepo } from '../types/github'
+import type { SortDir, SortKey } from '../utils/repoFilters'
 import { formatCompact, languageColor, timeAgo } from '../utils/format'
 
 function Language({ language }: { language: string | null }) {
@@ -51,21 +52,46 @@ export function RepoCard({ repo, onTopic }: { repo: GitHubRepo; onTopic?: (topic
   )
 }
 
-export function RepoTable({ repos }: { repos: GitHubRepo[] }) {
+interface SortHeaderProps {
+  label: string
+  column: SortKey
+  sort: SortKey
+  dir: SortDir
+  onSort: (column: SortKey) => void
+  num?: boolean
+}
+
+function SortHeader({ label, column, sort, dir, onSort, num }: SortHeaderProps) {
+  const active = sort === column
+  const Icon = !active ? ChevronsUpDown : dir === 'asc' ? ArrowUp : ArrowDown
+  return (
+    <th scope="col" className={num ? 'num' : undefined} aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : undefined}>
+      <button type="button" className={`th-sort${active ? ' active' : ''}`} onClick={() => onSort(column)}>
+        {label} <Icon size={13} aria-hidden="true" />
+      </button>
+    </th>
+  )
+}
+
+interface TableProps {
+  repos: GitHubRepo[]
+  sort: SortKey
+  dir: SortDir
+  onSort: (column: SortKey) => void
+}
+
+export function RepoTable({ repos, sort, dir, onSort }: TableProps) {
+  const header = { sort, dir, onSort }
   return (
     <div className="card table-wrap">
       <table className="repo-table">
         <thead>
           <tr>
-            <th scope="col">Repository</th>
+            <SortHeader label="Repository" column="name" {...header} />
             <th scope="col">Language</th>
-            <th scope="col" className="num">
-              Stars
-            </th>
-            <th scope="col" className="num">
-              Forks
-            </th>
-            <th scope="col">Updated</th>
+            <SortHeader label="Stars" column="stars" num {...header} />
+            <SortHeader label="Forks" column="forks" num {...header} />
+            <SortHeader label="Updated" column="pushed" {...header} />
           </tr>
         </thead>
         <tbody>

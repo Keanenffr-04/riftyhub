@@ -525,3 +525,32 @@ a.tab:hover { color: var(--text); }
   background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--text);
 }
 .text-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+/* ---------- Repository explorer (v11) ---------- */
+.th-sort {
+  display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; background: none; border: 0;
+  color: inherit; font: inherit; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.th-sort:hover, .th-sort.active { color: var(--text); }
+.th-sort svg { opacity: 0.7; }
+.th-sort.active svg { opacity: 1; color: #c4b0ff; }
+.repo-table th.num .th-sort { justify-content: flex-end; }
+
+.op-help { font-size: 13px; color: var(--muted); }
+.op-help summary { cursor: pointer; width: fit-content; padding: 2px 0; }
+.op-help summary:hover { color: var(--text); }
+.op-help[open] { padding-bottom: 4px; }
+.op-help p { margin: 8px 0; }
+.op-list { display: flex; flex-direction: column; gap: 6px; }
+.op-list code { padding: 1px 6px; border-radius: 6px; background: var(--raised); border: 1px solid var(--border); color: #d4c6ff; font-size: 12.5px; }
+
+.presets { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+.preset-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.preset { display: inline-flex; align-items: stretch; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--raised); overflow: hidden; }
+.preset.active { border-color: var(--accent); background: var(--accent-soft); }
+.preset button { background: none; border: 0; color: inherit; cursor: pointer; font-size: 13px; }
+.preset-apply { padding: 5px 4px 5px 12px; font-weight: 550; }
+.preset-delete { display: grid; place-items: center; padding: 0 9px 0 6px; color: var(--muted); }
+.preset-apply:hover, .preset-delete:hover { color: #d4c6ff; }
+.preset-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.preset-form .text-input { flex: 0 1 220px; }

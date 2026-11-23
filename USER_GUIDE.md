@@ -27,14 +27,15 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 
 ### 4. Explore their repositories
 1. Click the **Repositories** tab.
-2. Type in the search box to search names, descriptions, languages and topics. Every word you type must match.
+2. Type in the search box to search names, descriptions, languages and topics. Every word you type must match. You can also add operators, for example `stars:>100 lang:python -is:fork pushed:>2024-01-01` (open **Search tips** under the box for the full list). Anything RiftyHub can't understand is listed and ignored.
 3. Use the drop-downs to filter by language, topic, license, minimum stars and when it was last pushed.
 4. Tick **Hide forks** or **Hide archived** to remove those.
 5. Change the sort and click the arrow button to reverse the order.
 6. Click a topic pill on a card to filter by that topic.
 7. Active filters appear as chips. Click a chip to remove it, or use **Clear all**.
-8. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
+8. In the **Table** layout, click a column heading (Repository, Stars, Forks, Updated) to sort by it, and click again to reverse. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
 9. The address bar keeps your filters, so you can bookmark or share the filtered page.
+10. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
 
 ### 5. Read the Analytics
 1. Click the **Analytics** tab.
@@ -69,6 +70,7 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 1. Open **Settings** in the sidebar.
 2. **Overview layout**: tick sections to show or hide them, and use the arrows to reorder them.
 3. **Display**: choose Comfortable or Compact spacing, and whether Repositories starts as Cards or Table.
+   **Repositories page defaults**: choose the sort, its direction and whether forks or archived repositories are hidden when the page opens.
 4. **GitHub token (optional)**: paste a token to raise GitHub's limit (see step 10). **Save and test** checks it with GitHub first; **Remove token** deletes it.
 5. **Backup and restore**: click **Export backup** to download a file with your saved profiles, collections and preferences. **Import backup** adds a backup file to what you already have.
 6. Changes apply immediately and are remembered next time.
@@ -129,7 +131,9 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | Analytics helpers | `src/utils/analytics.ts` | Turns the repository list into totals, medians, language shares, topics and licenses. |
 | Filter helpers | `src/utils/repoFilters.ts` | Applies the Repositories search, filters and sorting, and reads and writes them in the URL. |
 | Event helpers | `src/utils/events.ts`, `activity.ts` | Turn GitHub's raw events into readable timeline entries, daily counts and summaries. |
-| Persistent store | `src/utils/persistentStore.ts` | Saves your preferences, saved profiles and collections in the browser (localStorage) and keeps open tabs in sync. |
+| Search query parser | `src/utils/searchQuery.ts` | Turns the Repositories search text into plain words plus operator conditions (stars, language, dates, and so on) and reports operators it can't understand. |
+| Presets | `src/utils/presets.ts`, `src/hooks/usePresets.ts` | Stores, validates and merges saved filter presets. |
+| Persistent store | `src/utils/persistentStore.ts` | Saves your preferences, saved profiles, collections and presets in the browser (localStorage) and keeps open tabs in sync. |
 | Preferences and saved helpers | `src/utils/preferences.ts`, `saved.ts` | Validate stored data (so damaged or old data can never break the app), and handle filtering, merging and backup. |
 
 ### How the pieces work together
@@ -139,7 +143,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 - **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
 - **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
 - **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
-- **Your data stays with you.** Saved profiles, collections and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
+- **Your data stays with you.** Saved profiles, collections, presets and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
 
 ### Good to know
 - Without a GitHub token, GitHub allows 60 requests per hour and about 10 commit searches per minute. With one: 5,000 per hour and about 30 searches per minute.

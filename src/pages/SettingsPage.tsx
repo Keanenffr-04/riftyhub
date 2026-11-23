@@ -1,8 +1,11 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { ArrowDown, ArrowUp, Download, KeyRound, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { usePreferences } from '../hooks/usePreferences'
+import { presetsStore } from '../hooks/usePresets'
 import { getSavedData, replaceSavedData, useSavedProfiles } from '../hooks/useSavedProfiles'
-import { SECTION_INFO, moveSection, setSectionVisible, type Density, type RepoView } from '../utils/preferences'
+import { SECTION_INFO, moveSection, setSectionVisible, type Density, type RepoDefaults, type RepoView } from '../utils/preferences'
+import { mergePresets } from '../utils/presets'
+import { SORT_OPTIONS, defaultDir, type SortKey } from '../utils/repoFilters'
 import { checkToken } from '../services/github'
 import { isValidTokenFormat, setToken, useToken } from '../services/token'
 import { buildBackup, mergeCollections, mergeProfiles, parseBackup } from '../utils/saved'
@@ -22,6 +25,8 @@ export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
 
+  const setDefaults = (patch: Partial<RepoDefaults>) => update({ repoDefaults: { ...preferences.repoDefaults, ...patch } })
+  const defaults = preferences.repoDefaults
   const token = useToken()
   const [tokenInput, setTokenInput] = useState('')
   const [checking, setChecking] = useState(false)
@@ -55,7 +60,7 @@ export default function SettingsPage() {
 
   function handleExport() {
     const { profiles: p, collections: c } = getSavedData()
-    download(`riftyhub-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(buildBackup(preferences, p, c), null, 2))
+    download(`riftyhub-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(buildBackup(preferences, p, c, presetsStore.get()), null, 2))
     setNotice({ kind: 'ok', text: 'Backup downloaded.' })
   }
 
@@ -72,9 +77,10 @@ export default function SettingsPage() {
     const mergedProfiles = mergeProfiles(current.profiles, parsed.profiles)
     replaceSavedData(mergedProfiles, mergeCollections(current.collections, parsed.collections, mergedProfiles))
     if (parsed.preferences) update(parsed.preferences)
+    presetsStore.set(mergePresets(presetsStore.get(), parsed.presets))
     setNotice({
       kind: 'ok',
-      text: `Imported ${parsed.profiles.length} saved ${parsed.profiles.length === 1 ? 'profile' : 'profiles'} and ${parsed.collections.length} ${parsed.collections.length === 1 ? 'collection' : 'collections'}. Existing saved profiles were kept.`,
+      text: `Imported ${parsed.profiles.length} saved ${parsed.profiles.length === 1 ? 'profile' : 'profiles'}, ${parsed.collections.length} ${parsed.collections.length === 1 ? 'collection' : 'collections'} and ${parsed.presets.length} filter ${parsed.presets.length === 1 ? 'preset' : 'presets'}. Existing saved profiles and presets were kept.`,
     })
   }
 
@@ -151,6 +157,43 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      <section className="card panel" aria-labelledby="repo-defaults">
+        <h2 id="repo-defaults">Repositories page defaults</h2>
+        <p className="muted small">
+          How the Repositories page starts when its address has no sort or filter of its own. Anything you change on the page itself still wins, and links you share only carry what you changed.
+        </p>
+        <div className="setting-row">
+          <span>
+            <strong>Sort by</strong>
+            <span className="muted small block">The order repositories are listed in.</span>
+          </span>
+          <div className="controls">
+            <select className="select" value={defaults.sort} onChange={(e) => setDefaults({ sort: e.target.value as SortKey, dir: defaultDir(e.target.value as SortKey) })} aria-label="Default sort">
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <div className="toggle" role="group" aria-label="Default sort direction">
+              {(['desc', 'asc'] as const).map((d) => (
+                <button key={d} className={defaults.dir === d ? 'active' : ''} aria-pressed={defaults.dir === d} onClick={() => setDefaults({ dir: d })}>
+                  {d === 'desc' ? 'Descending' : 'Ascending'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="controls">
+          <label className="check">
+            <input type="checkbox" checked={defaults.hideForks} onChange={(e) => setDefaults({ hideForks: e.target.checked })} /> Hide forks
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={defaults.hideArchived} onChange={(e) => setDefaults({ hideArchived: e.target.checked })} /> Hide archived
+          </label>
+        </div>
+      </section>
+
       <section className="card panel" aria-labelledby="token-settings">
         <h2 id="token-settings">GitHub token (optional)</h2>
         <p className="muted small">
@@ -199,7 +242,7 @@ export default function SettingsPage() {
         <h2 id="backup-settings">Backup and restore</h2>
         <p className="muted small">
           Everything is stored in this browser: {profiles.length} saved {profiles.length === 1 ? 'profile' : 'profiles'}, {collections.length}{' '}
-          {collections.length === 1 ? 'collection' : 'collections'} and your preferences. Export a file to keep a copy or move to another browser. Importing adds to what you already have.
+          {collections.length === 1 ? 'collection' : 'collections'}, your filter presets and your preferences. Export a file to keep a copy or move to another browser. Importing adds to what you already have.
         </p>
         <div className="controls">
           <button className="btn" onClick={handleExport}>

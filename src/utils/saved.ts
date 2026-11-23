@@ -1,5 +1,6 @@
 import type { SavedProfile } from '../types/github'
 import { sanitizePreferences, type Preferences } from './preferences'
+import { sanitizePresets, type FilterPreset } from './presets'
 
 export const MAX_SAVED = 50
 export const MAX_COLLECTIONS = 20
@@ -98,14 +99,16 @@ export interface Backup {
   preferences: Preferences
   savedProfiles: SavedProfile[]
   collections: string[]
+  /** Saved filter presets (added in v11; older backups do not have them). */
+  presets?: FilterPreset[]
 }
 
-export function buildBackup(preferences: Preferences, savedProfiles: SavedProfile[], collections: string[]): Backup {
-  return { app: 'riftyhub', version: 1, exportedAt: new Date().toISOString(), preferences, savedProfiles, collections }
+export function buildBackup(preferences: Preferences, savedProfiles: SavedProfile[], collections: string[], presets: FilterPreset[] = []): Backup {
+  return { app: 'riftyhub', version: 1, exportedAt: new Date().toISOString(), preferences, savedProfiles, collections, presets }
 }
 
 export type ParsedBackup =
-  | { ok: true; preferences: Preferences | null; profiles: SavedProfile[]; collections: string[] }
+  | { ok: true; preferences: Preferences | null; profiles: SavedProfile[]; collections: string[]; presets: FilterPreset[] }
   | { ok: false; error: string }
 
 export function parseBackup(text: string): ParsedBackup {
@@ -122,6 +125,7 @@ export function parseBackup(text: string): ParsedBackup {
     preferences: r.preferences ? sanitizePreferences(r.preferences) : null,
     profiles: sanitizeProfiles(r.savedProfiles),
     collections: sanitizeCollections(r.collections),
+    presets: sanitizePresets(r.presets),
   }
 }
 
