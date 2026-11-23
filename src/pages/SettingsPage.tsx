@@ -1,9 +1,11 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { ArrowDown, ArrowUp, Download, KeyRound, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { ArrowDown, ArrowUp, Download, GripVertical, KeyRound, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { usePreferences } from '../hooks/usePreferences'
 import { presetsStore } from '../hooks/usePresets'
+import { pinsStore } from '../hooks/usePins'
+import { mergePins } from '../utils/pins'
 import { getSavedData, replaceSavedData, useSavedProfiles } from '../hooks/useSavedProfiles'
-import { SECTION_INFO, moveSection, setSectionVisible, type Density, type RepoDefaults, type RepoView } from '../utils/preferences'
+import { SECTION_INFO, moveSection, moveSectionTo, setSectionVisible, type Density, type RepoDefaults, type RepoView, type SectionId, type ThemePref } from '../utils/preferences'
 import { mergePresets } from '../utils/presets'
 import { SORT_OPTIONS, defaultDir, type SortKey } from '../utils/repoFilters'
 import { checkToken } from '../services/github'
@@ -27,6 +29,8 @@ export default function SettingsPage() {
 
   const setDefaults = (patch: Partial<RepoDefaults>) => update({ repoDefaults: { ...preferences.repoDefaults, ...patch } })
   const defaults = preferences.repoDefaults
+  const [dragId, setDragId] = useState<SectionId | null>(null)
+  const [overId, setOverId] = useState<SectionId | null>(null)
   const token = useToken()
   const [tokenInput, setTokenInput] = useState('')
   const [checking, setChecking] = useState(false)
@@ -60,7 +64,7 @@ export default function SettingsPage() {
 
   function handleExport() {
     const { profiles: p, collections: c } = getSavedData()
-    download(`riftyhub-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(buildBackup(preferences, p, c, presetsStore.get()), null, 2))
+    download(`riftyhub-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(buildBackup(preferences, p, c, presetsStore.get(), pinsStore.get()), null, 2))
     setNotice({ kind: 'ok', text: 'Backup downloaded.' })
   }
 
@@ -78,6 +82,7 @@ export default function SettingsPage() {
     replaceSavedData(mergedProfiles, mergeCollections(current.collections, parsed.collections, mergedProfiles))
     if (parsed.preferences) update(parsed.preferences)
     presetsStore.set(mergePresets(presetsStore.get(), parsed.presets))
+    pinsStore.set(mergePins(pinsStore.get(), parsed.pins))
     setNotice({
       kind: 'ok',
       text: `Imported ${parsed.profiles.length} saved ${parsed.profiles.length === 1 ? 'profile' : 'profiles'}, ${parsed.collections.length} ${parsed.collections.length === 1 ? 'collection' : 'collections'} and ${parsed.presets.length} filter ${parsed.presets.length === 1 ? 'preset' : 'presets'}. Existing saved profiles and presets were kept.`,
@@ -93,10 +98,37 @@ export default function SettingsPage() {
 
       <section className="card panel" aria-labelledby="overview-settings">
         <h2 id="overview-settings">Overview layout</h2>
-        <p className="muted small">Choose which sections appear under the profile card on a developer’s Overview page, and in what order.</p>
+        <p className="muted small">Choose which sections appear under the profile card on a developer’s Overview page, and in what order. Drag a row by its handle with a mouse, or use the arrow buttons (these also work with a keyboard and on touch screens).</p>
         <ul className="section-list">
           {preferences.overview.map((s, i) => (
-            <li key={s.id}>
+            <li
+              key={s.id}
+              className={`${dragId === s.id ? 'dragging' : ''}${overId === s.id && dragId !== s.id ? ' drop-target' : ''}`}
+              draggable
+              onDragStart={(e) => {
+                setDragId(s.id)
+                e.dataTransfer.effectAllowed = 'move'
+                e.dataTransfer.setData('text/plain', s.id)
+              }}
+              onDragOver={(e) => {
+                if (!dragId) return
+                e.preventDefault()
+                setOverId(s.id)
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                if (dragId) update({ overview: moveSectionTo(preferences.overview, dragId, s.id) })
+                setDragId(null)
+                setOverId(null)
+              }}
+              onDragEnd={() => {
+                setDragId(null)
+                setOverId(null)
+              }}
+            >
+              <span className="drag-handle" aria-hidden="true" title="Drag to reorder">
+                <GripVertical size={16} />
+              </span>
               <label className="check">
                 <input type="checkbox" checked={s.visible} onChange={(e) => update({ overview: setSectionVisible(preferences.overview, s.id, e.target.checked) })} />
                 <span>
@@ -124,6 +156,19 @@ export default function SettingsPage() {
 
       <section className="card panel" aria-labelledby="display-settings">
         <h2 id="display-settings">Display</h2>
+        <div className="setting-row">
+          <span>
+            <strong>Theme</strong>
+            <span className="muted small block">System follows your device’s light or dark setting. The sun/moon button at the top of every page switches quickly.</span>
+          </span>
+          <div className="toggle" role="group" aria-label="Theme">
+            {(['system', 'dark', 'light'] as ThemePref[]).map((t) => (
+              <button key={t} className={preferences.theme === t ? 'active' : ''} aria-pressed={preferences.theme === t} onClick={() => update({ theme: t })}>
+                {t === 'system' ? 'System' : t === 'dark' ? 'Dark' : 'Light'}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="setting-row">
           <span>
             <strong>Density</strong>
@@ -242,7 +287,7 @@ export default function SettingsPage() {
         <h2 id="backup-settings">Backup and restore</h2>
         <p className="muted small">
           Everything is stored in this browser: {profiles.length} saved {profiles.length === 1 ? 'profile' : 'profiles'}, {collections.length}{' '}
-          {collections.length === 1 ? 'collection' : 'collections'}, your filter presets and your preferences. Export a file to keep a copy or move to another browser. Importing adds to what you already have.
+          {collections.length === 1 ? 'collection' : 'collections'}, your filter presets, pinned repositories and your preferences. Export a file to keep a copy or move to another browser. Importing adds to what you already have.
         </p>
         <div className="controls">
           <button className="btn" onClick={handleExport}>

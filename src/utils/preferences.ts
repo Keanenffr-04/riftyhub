@@ -1,6 +1,7 @@
 import { DEFAULT_FILTERS, SORT_OPTIONS, defaultDir, type RepoFilters, type SortDir, type SortKey } from './repoFilters'
 
-export type SectionId = 'stats' | 'highlights' | 'commits' | 'repos'
+export type SectionId = 'stats' | 'pinned' | 'highlights' | 'commits' | 'repos'
+export type ThemePref = 'dark' | 'light' | 'system'
 export type Density = 'comfortable' | 'compact'
 export type RepoView = 'cards' | 'table'
 
@@ -18,6 +19,7 @@ export interface RepoDefaults {
 }
 
 export interface Preferences {
+  theme: ThemePref
   density: Density
   repoView: RepoView
   /** Order and visibility of the sections under the profile card on the Overview page. */
@@ -25,16 +27,18 @@ export interface Preferences {
   repoDefaults: RepoDefaults
 }
 
-export const SECTION_IDS: SectionId[] = ['stats', 'highlights', 'commits', 'repos']
+export const SECTION_IDS: SectionId[] = ['stats', 'pinned', 'highlights', 'commits', 'repos']
 
 export const SECTION_INFO: Record<SectionId, { label: string; description: string }> = {
   stats: { label: 'Statistics', description: 'Repositories, stars, forks, followers and gists' },
+  pinned: { label: 'Pinned repositories', description: 'Up to six repositories you pinned for this developer' },
   highlights: { label: 'Highlights', description: 'Top languages and most starred repositories' },
   commits: { label: 'Recent commits', description: 'The latest public commits' },
   repos: { label: 'Recently active repositories', description: 'The six most recently pushed repositories' },
 }
 
 export const defaultPreferences = (): Preferences => ({
+  theme: 'dark',
   density: 'comfortable',
   repoView: 'cards',
   overview: SECTION_IDS.map((id) => ({ id, visible: true })),
@@ -74,6 +78,7 @@ export function sanitizePreferences(raw: unknown): Preferences {
   for (const id of SECTION_IDS) if (!seen.has(id)) overview.push({ id, visible: true })
 
   return {
+    theme: r.theme === 'light' || r.theme === 'system' ? r.theme : 'dark',
     density: r.density === 'compact' ? 'compact' : 'comfortable',
     repoView: r.repoView === 'table' ? 'table' : 'cards',
     overview,
@@ -87,6 +92,17 @@ export function moveSection(list: OverviewSection[], id: SectionId, delta: -1 | 
   if (from < 0 || to < 0 || to >= list.length) return list
   const next = [...list]
   ;[next[from], next[to]] = [next[to], next[from]]
+  return next
+}
+
+/** Moves a section to the position of another one (used by drag and drop). */
+export function moveSectionTo(list: OverviewSection[], id: SectionId, targetId: SectionId): OverviewSection[] {
+  const from = list.findIndex((s) => s.id === id)
+  const to = list.findIndex((s) => s.id === targetId)
+  if (from < 0 || to < 0 || from === to) return list
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
   return next
 }
 

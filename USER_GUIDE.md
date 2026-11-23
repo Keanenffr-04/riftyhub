@@ -16,10 +16,12 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 ### 2. Look up a developer
 1. On the Home page, type a GitHub username (for example `torvalds`) and press Enter. You can also click one of the example names.
 2. You land on that developer's **Overview** page.
+3. Tip: on any page, press **/** to jump straight to the search box. The sun/moon button at the top switches between the dark and light theme.
 
 ### 3. Read the Overview
 - The **profile card** shows their avatar, name, bio, company, location, website and join date.
 - The **statistics tiles** show repositories, stars, forks, followers, following and gists.
+- **Pinned repositories** shows up to six projects you pinned for this developer (see step 4). Pins are your own picks and are stored in this browser.
 - **Top languages** and **Most starred** give a quick summary of their work.
 - **Recent commits** lists their latest public commits.
 - **Recently active repositories** shows the six most recently pushed projects.
@@ -35,7 +37,8 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 7. Active filters appear as chips. Click a chip to remove it, or use **Clear all**.
 8. In the **Table** layout, click a column heading (Repository, Stars, Forks, Updated) to sort by it, and click again to reverse. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
 9. The address bar keeps your filters, so you can bookmark or share the filtered page.
-10. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
+10. **Pinning:** click the pin button on a repository (card or table row) to pin it to the Overview, and click it again to unpin. You can pin up to six per developer.
+11. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
 
 ### 5. Read the Analytics
 1. Click the **Analytics** tab.
@@ -68,11 +71,11 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 
 ### 9. Make RiftyHub yours
 1. Open **Settings** in the sidebar.
-2. **Overview layout**: tick sections to show or hide them, and use the arrows to reorder them.
-3. **Display**: choose Comfortable or Compact spacing, and whether Repositories starts as Cards or Table.
+2. **Overview layout**: tick sections to show or hide them. Reorder them by dragging a row's handle (mouse) or with the arrow buttons (keyboard and touch).
+3. **Display**: choose the **Theme** (System, Dark or Light), Comfortable or Compact spacing, and whether Repositories starts as Cards or Table.
    **Repositories page defaults**: choose the sort, its direction and whether forks or archived repositories are hidden when the page opens.
 4. **GitHub token (optional)**: paste a token to raise GitHub's limit (see step 10). **Save and test** checks it with GitHub first; **Remove token** deletes it.
-5. **Backup and restore**: click **Export backup** to download a file with your saved profiles, collections and preferences. **Import backup** adds a backup file to what you already have.
+5. **Backup and restore**: click **Export backup** to download a file with your saved profiles, collections, filter presets, pinned repositories and preferences. **Import backup** adds a backup file to what you already have.
 6. Changes apply immediately and are remembered next time.
 
 ### 10. Keep an eye on the request limit
@@ -132,6 +135,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | Filter helpers | `src/utils/repoFilters.ts` | Applies the Repositories search, filters and sorting, and reads and writes them in the URL. |
 | Event helpers | `src/utils/events.ts`, `activity.ts` | Turn GitHub's raw events into readable timeline entries, daily counts and summaries. |
 | Search query parser | `src/utils/searchQuery.ts` | Turns the Repositories search text into plain words plus operator conditions (stars, language, dates, and so on) and reports operators it can't understand. |
+| Theme and pins | `src/hooks/useTheme.ts`, `src/utils/theme.ts`, `src/utils/pins.ts`, `public/theme-init.js` | Apply the dark or light theme (before the first paint, so there is no flash), supply chart colours for each theme, and store pinned repositories. |
 | Presets | `src/utils/presets.ts`, `src/hooks/usePresets.ts` | Stores, validates and merges saved filter presets. |
 | Persistent store | `src/utils/persistentStore.ts` | Saves your preferences, saved profiles, collections and presets in the browser (localStorage) and keeps open tabs in sync. |
 | Preferences and saved helpers | `src/utils/preferences.ts`, `saved.ts` | Validate stored data (so damaged or old data can never break the app), and handle filtering, merging and backup. |
@@ -143,7 +147,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 - **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
 - **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
 - **Saved profiles connect to Compare.** From Saved profiles you can compare one person (the **Compare** button) or two (tick them, then **Compare selected**). Compare also links back to each developer's profile, and every profile has a Compare button.
-- **Your data stays with you.** Saved profiles, collections, presets and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
+- **Your data stays with you.** Saved profiles, collections, presets, pins and preferences live only in this browser. Use **Export backup** if you want a copy or want to move to another browser.
 
 ### Good to know
 - Without a GitHub token, GitHub allows 60 requests per hour and about 10 commit searches per minute. With one: 5,000 per hour and about 30 searches per minute.

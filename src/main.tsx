@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import { pruneStorage } from './services/cache'
+import './hooks/useTheme'
 import './styles/index.css'
 
 pruneStorage()

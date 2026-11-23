@@ -1,8 +1,10 @@
-import { Fragment, useMemo, type ReactNode } from 'react'
+import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Code, FolderGit2, GitFork, Star, UserPlus, Users } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
 import { usePreferences } from '../hooks/usePreferences'
+import { usePins } from '../hooks/usePins'
+import { MAX_PINS, pinnedRepos } from '../utils/pins'
 import ProfileCard from '../components/ProfileCard'
 import RecentCommits from '../components/RecentCommits'
 import LanguageBars from '../components/LanguageBars'
@@ -15,6 +17,10 @@ export default function OverviewPage() {
   const { user, repos, refresh } = useUserData()
   const { preferences } = usePreferences()
   const analytics = useMemo(() => computeAnalytics(repos), [repos])
+  const pins = usePins(user.login)
+  const pinned = useMemo(() => pinnedRepos(pins.map, user.login, repos), [pins.map, user.login, repos])
+  const [pinNote, setPinNote] = useState('')
+  const togglePinned = (name: string) => setPinNote(pins.toggle(name) === 'full' ? `You can pin up to ${MAX_PINS} repositories per developer. Unpin one first.` : '')
   const recent = repos.slice(0, 6) // API already returns most recently pushed first
 
   const stats = [
@@ -42,6 +48,32 @@ export default function OverviewPage() {
         <p className="muted small note">
           Stars and forks are totals across the {repos.length} loaded repositories.{' '}
           <Link to="analytics">See full analytics</Link>
+        </p>
+      </section>
+    ),
+    pinned: (
+      <section aria-labelledby="pinned-heading">
+        <div className="section-head">
+          <h2 id="pinned-heading">Pinned repositories</h2>
+          {pinned.length > 0 && (
+            <span className="muted small">
+              {pinned.length} of {MAX_PINS}
+            </span>
+          )}
+        </div>
+        {pinned.length === 0 ? (
+          <p className="muted">
+            Nothing pinned for @{user.login} yet. Use the pin button on the <Link to="repos">Repositories</Link> page. Pins are saved in this browser.
+          </p>
+        ) : (
+          <div className="repo-grid">
+            {pinned.map((repo) => (
+              <RepoCard key={repo.id} repo={repo} pinned onTogglePin={() => togglePinned(repo.name)} />
+            ))}
+          </div>
+        )}
+        <p className="muted small" role="status">
+          {pinNote}
         </p>
       </section>
     ),
@@ -94,7 +126,7 @@ export default function OverviewPage() {
         ) : (
           <div className="repo-grid">
             {recent.map((repo) => (
-              <RepoCard key={repo.id} repo={repo} />
+              <RepoCard key={repo.id} repo={repo} pinned={pins.isPinned(repo.name)} onTogglePin={() => togglePinned(repo.name)} />
             ))}
           </div>
         )}

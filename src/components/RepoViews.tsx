@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronsUpDown, ExternalLink, GitFork, Star } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, ExternalLink, GitFork, Pin, Star } from 'lucide-react'
 import type { GitHubRepo } from '../types/github'
 import type { SortDir, SortKey } from '../utils/repoFilters'
 import { formatCompact, languageColor, timeAgo } from '../utils/format'
@@ -13,9 +13,32 @@ function Language({ language }: { language: string | null }) {
   )
 }
 
+function PinButton({ name, pinned, onToggle }: { name: string; pinned: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      className={`pin-btn${pinned ? ' on' : ''}`}
+      onClick={onToggle}
+      aria-pressed={pinned}
+      aria-label={`${pinned ? 'Unpin' : 'Pin'} ${name}`}
+      title={pinned ? 'Unpin from Overview' : 'Pin to Overview'}
+    >
+      <Pin size={15} aria-hidden="true" />
+    </button>
+  )
+}
+
 const MAX_TOPICS = 4
 
-export function RepoCard({ repo, onTopic }: { repo: GitHubRepo; onTopic?: (topic: string) => void }) {
+interface CardProps {
+  repo: GitHubRepo
+  onTopic?: (topic: string) => void
+  /** When given, the card shows a pin button. */
+  pinned?: boolean
+  onTogglePin?: () => void
+}
+
+export function RepoCard({ repo, onTopic, pinned = false, onTogglePin }: CardProps) {
   const topics = onTopic ? (repo.topics ?? []).slice(0, MAX_TOPICS) : []
   return (
     <article className="card repo-card">
@@ -25,6 +48,7 @@ export function RepoCard({ repo, onTopic }: { repo: GitHubRepo; onTopic?: (topic
         </a>
         {repo.fork && <span className="tag">Fork</span>}
         {repo.archived && <span className="tag">Archived</span>}
+        {onTogglePin && <PinButton name={repo.name} pinned={pinned} onToggle={onTogglePin} />}
       </header>
       <p className={`repo-desc${repo.description ? '' : ' muted'}`}>{repo.description ?? 'No description provided.'}</p>
       {topics.length > 0 && (
@@ -78,9 +102,11 @@ interface TableProps {
   sort: SortKey
   dir: SortDir
   onSort: (column: SortKey) => void
+  isPinned?: (repo: GitHubRepo) => boolean
+  onTogglePin?: (repo: GitHubRepo) => void
 }
 
-export function RepoTable({ repos, sort, dir, onSort }: TableProps) {
+export function RepoTable({ repos, sort, dir, onSort, isPinned, onTogglePin }: TableProps) {
   const header = { sort, dir, onSort }
   return (
     <div className="card table-wrap">
@@ -103,6 +129,7 @@ export function RepoTable({ repos, sort, dir, onSort }: TableProps) {
                 </a>
                 {repo.fork && <span className="tag">Fork</span>}
                 {repo.archived && <span className="tag">Archived</span>}
+                {onTogglePin && <PinButton name={repo.name} pinned={isPinned?.(repo) ?? false} onToggle={() => onTogglePin(repo)} />}
                 {repo.description && <div className="table-desc">{repo.description}</div>}
               </td>
               <td>

@@ -44,10 +44,14 @@ export default function SearchForm({ initialValue = '', large = false, onSubmitt
           placeholder="Search a GitHub username"
           aria-label="GitHub username"
           aria-invalid={error ? true : undefined}
+          aria-keyshortcuts="/"
           autoComplete="off"
           autoCapitalize="none"
           spellCheck={false}
         />
+        <kbd className="kbd-hint" aria-hidden="true">
+          /
+        </kbd>
         <button type="submit" className="btn btn-primary">
           Search
         </button>

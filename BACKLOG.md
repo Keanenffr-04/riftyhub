@@ -5,10 +5,6 @@ Ideas for future versions. Items are moved into a version only when it has room 
 ## Repository explorer
 
 ## Dashboard
-- Light theme and theme switcher
-- Drag-and-drop reordering of Overview sections
-- Keyboard shortcut to focus the search box
-- Pinned repositories on the Overview page
 
 ## Analytics / data
 - Per-repository code-size breakdown (click a repository to see its languages)

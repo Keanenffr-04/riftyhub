@@ -60,7 +60,8 @@ npm run preview
 - Analytics: totals, developer insights (median stars, recent activity, license coverage), interactive charts (rank repositories by stars, forks or issues; activity by creation year or last push), topic and license breakdowns
 - Language statistics by repository count (forks optional, repositories without a language reported) or by real code size, loaded on demand from GitHub
 - Performance and reliability: parallel repository loading, slimmed-down cached data, automatic cache cleanup, request timeout and retries, "Show more" paging for large repository lists, lazy-loaded chart pages, offline banner, error boundary, skip link and text alternatives for charts
-- Personalisation: Settings page to show, hide and reorder Overview sections, choose compact or comfortable density, set the default repository layout, and export/import a backup
+- Personalisation: Settings page to show, hide and reorder (drag and drop or arrows) Overview sections, choose a dark, light or system theme, compact or comfortable density, set the default repository layout, and export/import a backup
+- Pinned repositories (up to six per developer) on the Overview, a sun/moon theme button, and a `/` shortcut to focus the search box
 - Saved profiles: favourites, named collections, search, sorting and "Compare selected" for any two saved developers
 - Developer comparison: tally of who leads, 11 metrics, language overlap, most starred repositories, swap button, and a Compare button on every profile
 - Activity page: public event timeline with filters, daily activity chart and a commit explorer (search messages, filter by repository and date)
@@ -70,7 +71,7 @@ npm run preview
 ## Notes
 - Uses unauthenticated GitHub API requests (60/hour per IP) unless you add a token in Settings (5,000/hour). A token is stored only in this browser (localStorage), sent only to api.github.com and never included in backups.
 - Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch. Temporary failures are retried automatically and requests time out after 15 seconds.
-- Saved profiles, collections, filter presets and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
+- Saved profiles, collections, filter presets, pinned repositories and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
 - Shows up to 300 public repositories per user.
 - Activity uses GitHub's public events (up to 300 events from the last 90 days). The commit explorer uses GitHub's commit search, which allows about 10 searches per minute without a token.
 - The code-size language breakdown uses one GitHub request per repository (up to 20 most recently pushed), so it only runs when you click "Load code-size breakdown".

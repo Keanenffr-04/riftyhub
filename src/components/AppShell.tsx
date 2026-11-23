@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useMatch } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, Moon, Sun } from 'lucide-react'
 import Sidebar from './Sidebar'
 import SearchForm from './SearchForm'
 import ErrorBoundary from './ErrorBoundary'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useThemeToggle } from '../hooks/useTheme'
 import { pageTitle } from '../utils/pageTitle'
 
 export default function AppShell() {
@@ -13,6 +14,7 @@ export default function AppShell() {
   const username = match?.params.username ? decodeURIComponent(match.params.username) : null
   const location = useLocation()
   const online = useOnlineStatus()
+  const { next: nextTheme, toggle: toggleTheme } = useThemeToggle()
   const mainRef = useRef<HTMLElement>(null)
   const firstRender = useRef(true)
 
@@ -31,6 +33,23 @@ export default function AppShell() {
   useEffect(() => {
     setMenuOpen(false)
   }, [location.pathname])
+
+  // Pressing "/" jumps to the search box (unless you are already typing somewhere).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return
+      const target = e.target as HTMLElement | null
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return
+      const box = document.querySelector<HTMLInputElement>('form[role="search"] input')
+      if (!box) return
+      e.preventDefault()
+      setMenuOpen(false)
+      box.focus()
+      box.select()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -59,6 +78,9 @@ export default function AppShell() {
             <Menu size={20} />
           </button>
           {location.pathname !== '/' && <SearchForm key={username ?? 'none'} initialValue={username ?? ''} />}
+          <button className="icon-btn theme-btn" onClick={toggleTheme} aria-label={`Switch to ${nextTheme} theme`} title={`Switch to ${nextTheme} theme`}>
+            {nextTheme === 'light' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
+          </button>
         </header>
         {!online && (
           <div className="offline-banner" role="status">

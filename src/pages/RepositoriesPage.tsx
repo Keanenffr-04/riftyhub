@@ -4,6 +4,8 @@ import { ArrowDown, ArrowUp, LayoutGrid, List, Save, Search, X } from 'lucide-re
 import { useUserData } from '../components/UserLayout'
 import { usePreferences } from '../hooks/usePreferences'
 import { usePresets } from '../hooks/usePresets'
+import { usePins } from '../hooks/usePins'
+import { MAX_PINS } from '../utils/pins'
 import { RepoCard, RepoTable } from '../components/RepoViews'
 import { EmptyState } from '../components/States'
 import { MAX_REPO_PAGES } from '../services/github'
@@ -72,6 +74,20 @@ export default function RepositoriesPage() {
     setPresetName('')
   }
 
+  // Pinned repositories (shown on this developer's Overview).
+  const pins = usePins(user.login)
+  const [pinNote, setPinNote] = useState('')
+  function togglePinned(name: string) {
+    const result = pins.toggle(name)
+    setPinNote(
+      result === 'full'
+        ? `You can pin up to ${MAX_PINS} repositories per developer. Unpin one first.`
+        : result === 'pinned'
+          ? `Pinned ${name}. It now appears on the Overview.`
+          : `Unpinned ${name}.`,
+    )
+  }
+
   const parsedQuery = useMemo(() => parseQuery(filters.query), [filters.query])
   const clearAll = () => update({ query: '', language: '', topic: '', license: '', minStars: 0, updated: '', hideForks: false, hideArchived: false })
 
@@ -137,6 +153,9 @@ export default function RepositoriesPage() {
           <h1 className="page-title">Repositories</h1>
           <p className="muted" aria-live="polite">
             Showing {visible.length} of {repos.length} public repositories by @{user.login}
+          </p>
+          <p className="muted small" role="status">
+            {pinNote}
           </p>
         </div>
         <div className="toggle" role="group" aria-label="Layout">
@@ -339,11 +358,11 @@ export default function RepositoriesPage() {
       ) : view === 'cards' ? (
         <div className="repo-grid">
           {shownRepos.map((repo) => (
-            <RepoCard key={repo.id} repo={repo} onTopic={(topic) => update({ topic })} />
+            <RepoCard key={repo.id} repo={repo} onTopic={(topic) => update({ topic })} pinned={pins.isPinned(repo.name)} onTogglePin={() => togglePinned(repo.name)} />
           ))}
         </div>
       ) : (
-        <RepoTable repos={shownRepos} sort={filters.sort} dir={filters.dir} onSort={sortByColumn} />
+        <RepoTable repos={shownRepos} sort={filters.sort} dir={filters.dir} onSort={sortByColumn} isPinned={(r) => pins.isPinned(r.name)} onTogglePin={(r) => togglePinned(r.name)} />
       )}
 
       {visible.length > shownRepos.length && (
