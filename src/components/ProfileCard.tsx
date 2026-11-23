@@ -10,7 +10,7 @@ export default function ProfileCard({ user, onRefresh }: { user: GitHubUser; onR
 
   return (
     <section className="card profile" aria-label="Profile">
-      <img className="avatar" src={user.avatar_url} alt={`${user.login}'s avatar`} width={96} height={96} />
+      <img className="avatar" src={user.avatar_url} alt={`${user.login}'s avatar`} width={96} height={96} decoding="async" />
       <div className="profile-body">
         <div className="profile-title">
           <h1>{user.name ?? user.login}</h1>

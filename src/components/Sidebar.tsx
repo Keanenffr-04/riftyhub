@@ -33,7 +33,7 @@ export default function Sidebar({ username, open, onClose }: Props) {
         </button>
       </div>
 
-      <nav className="nav">
+      <nav className="nav" aria-label="Main">
         <NavLink to="/" end className={linkClass} onClick={onClose}>
           <Home size={17} /> Home
         </NavLink>

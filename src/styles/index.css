@@ -132,7 +132,7 @@ a.nav-link:hover { background: var(--raised); color: var(--text); }
 }
 .btn:hover { border-color: #4a4a58; }
 .btn-primary { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
-.btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { background: #8248f0; border-color: #8248f0; }
 
 .icon-btn {
   display: inline-grid; place-items: center; width: 38px; height: 38px;
@@ -172,7 +172,7 @@ a.nav-link:hover { background: var(--raised); color: var(--text); }
 .search-field input {
   flex: 1; min-width: 0; padding: 6px 0; background: none; border: 0; outline: none; color: var(--text);
 }
-.search-field input::placeholder { color: #6a6a79; }
+::placeholder { color: #9a9aa9; opacity: 1; }
 .field-error { margin-top: 6px; font-size: 13px; color: var(--danger); }
 
 .search-large { width: 100%; max-width: 560px; }
@@ -240,7 +240,7 @@ a.nav-link:hover { background: var(--raised); color: var(--text); }
 
 /* ---------- States ---------- */
 .state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; text-align: center; }
-.state h2 { font-size: 20px; font-weight: 650; }
+.state h1, .state h2 { font-size: 20px; font-weight: 650; }
 .state p { max-width: 42ch; color: var(--muted); }
 .state-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--accent-soft); color: #c4b0ff; margin-bottom: 4px; }
 .state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
@@ -517,3 +517,11 @@ a.tab:hover { color: var(--text); }
   .offline-banner { padding: 10px 16px; }
   .controls > .select, .controls > .inline-input, .control-search { flex: 1 1 100%; }
 }
+
+/* ---------- Token field (v10) ---------- */
+.token-form { display: flex; flex-wrap: wrap; gap: 10px; }
+.text-input {
+  flex: 1 1 260px; min-width: 0; padding: 9px 12px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--text);
+}
+.text-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }

@@ -98,7 +98,7 @@ function Results({ a, b }: { a: string; b: string }) {
               {[left, right].map((s) => (
                 <th key={s.user.login} scope="col">
                   <Link to={`/u/${s.user.login}`} className="compare-user">
-                    <img src={s.user.avatar_url} alt="" width={44} height={44} />
+                    <img src={s.user.avatar_url} alt="" width={44} height={44} loading="lazy" decoding="async" />
                     <span>
                       <strong>{s.user.name ?? s.user.login}</strong>
                       <span className="muted">@{s.user.login}</span>

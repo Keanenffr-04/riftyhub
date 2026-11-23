@@ -32,8 +32,7 @@ Ideas for future versions. Items are moved into a version only when it has room 
 
 ## Quality
 - Automated tests for the filter helpers (verified manually in v5)
-- Lighthouse audit and fixes (V10)
-- Optional GitHub token field to raise the request limit (stored only in the browser)
+- Fix whatever the first real Lighthouse report (run on `npm run preview`) still flags
 - Stale-while-revalidate: show cached data instantly and refresh quietly in the background
 - Virtualised long lists
 - Automated test suite in the repo (helpers, request layer and cache were verified with throwaway scripts in v6 to v9)

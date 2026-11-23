@@ -17,7 +17,7 @@ export default function UserTabs({ username, user, repoCount }: Props) {
     <div className="user-bar">
       {!onOverview && (
         <div className="user-bar-id">
-          <img src={user.avatar_url} alt="" width={32} height={32} />
+          <img src={user.avatar_url} alt="" width={32} height={32} loading="lazy" decoding="async" />
           <span>
             <strong>{user.name ?? user.login}</strong>
             <span className="muted">@{user.login}</span>

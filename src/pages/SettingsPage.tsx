@@ -1,8 +1,10 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { ArrowDown, ArrowUp, Download, RotateCcw, Upload } from 'lucide-react'
+import { ArrowDown, ArrowUp, Download, KeyRound, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { usePreferences } from '../hooks/usePreferences'
 import { getSavedData, replaceSavedData, useSavedProfiles } from '../hooks/useSavedProfiles'
 import { SECTION_INFO, moveSection, setSectionVisible, type Density, type RepoView } from '../utils/preferences'
+import { checkToken } from '../services/github'
+import { isValidTokenFormat, setToken, useToken } from '../services/token'
 import { buildBackup, mergeCollections, mergeProfiles, parseBackup } from '../utils/saved'
 
 function download(filename: string, text: string) {
@@ -19,6 +21,37 @@ export default function SettingsPage() {
   const { profiles, collections } = useSavedProfiles()
   const fileRef = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+
+  const token = useToken()
+  const [tokenInput, setTokenInput] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [tokenNotice, setTokenNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+
+  async function handleSaveToken() {
+    const value = tokenInput.trim()
+    if (!isValidTokenFormat(value)) {
+      setTokenNotice({ kind: 'error', text: 'That doesn’t look like a GitHub token. Tokens start with ghp_ or github_pat_.' })
+      return
+    }
+    setChecking(true)
+    setTokenNotice(null)
+    const result = await checkToken(value)
+    setChecking(false)
+    if (result.ok) {
+      setToken(value)
+      setTokenInput('')
+      setTokenNotice({ kind: 'ok', text: result.limit ? `Token saved. GitHub now allows ${result.limit.toLocaleString()} requests per hour.` : 'Token saved.' })
+    } else if (result.reason === 'rejected') {
+      setTokenNotice({ kind: 'error', text: 'GitHub rejected this token. Check that you copied all of it and that it has not expired.' })
+    } else {
+      setTokenNotice({ kind: 'error', text: 'Could not reach GitHub to check the token, so it was not saved. Try again in a moment.' })
+    }
+  }
+
+  function handleRemoveToken() {
+    setToken('')
+    setTokenNotice({ kind: 'ok', text: 'Token removed from this browser.' })
+  }
 
   function handleExport() {
     const { profiles: p, collections: c } = getSavedData()
@@ -116,6 +149,50 @@ export default function SettingsPage() {
             <RotateCcw size={14} /> Reset preferences
           </button>
         </div>
+      </section>
+
+      <section className="card panel" aria-labelledby="token-settings">
+        <h2 id="token-settings">GitHub token (optional)</h2>
+        <p className="muted small">
+          Without a token GitHub allows 60 requests per hour. With one it allows 5,000. Create a fine-grained token on GitHub with <strong>no permissions</strong> (public data only) and paste it here.
+          It is stored only in this browser, sent only to api.github.com and never included in backups. Anyone who can use this browser profile could read it, so do not use it on a shared computer.
+        </p>
+        {token ? (
+          <div className="setting-row">
+            <span>
+              <strong>Token saved</strong>
+              <span className="muted small block">Ending in …{token.slice(-4)}</span>
+            </span>
+            <button className="btn" onClick={handleRemoveToken}>
+              <Trash2 size={14} /> Remove token
+            </button>
+          </div>
+        ) : (
+          <div className="token-form">
+            <label className="sr-only" htmlFor="token-input">
+              GitHub personal access token
+            </label>
+            <input
+              id="token-input"
+              className="text-input"
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="github_pat_…"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !checking && void handleSaveToken()}
+            />
+            <button className="btn btn-primary" onClick={() => void handleSaveToken()} disabled={checking || !tokenInput.trim()}>
+              <KeyRound size={14} /> {checking ? 'Checking…' : 'Save and test'}
+            </button>
+          </div>
+        )}
+        {tokenNotice && (
+          <p className={tokenNotice.kind === 'error' ? 'field-error' : 'muted small'} role={tokenNotice.kind === 'error' ? 'alert' : 'status'}>
+            {tokenNotice.text}
+          </p>
+        )}
       </section>
 
       <section className="card panel" aria-labelledby="backup-settings">

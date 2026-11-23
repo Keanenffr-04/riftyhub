@@ -12,6 +12,11 @@ export function setRateLimit(info: RateLimitInfo) {
   listeners.forEach((l) => l())
 }
 
+export function clearRateLimit() {
+  current = null
+  listeners.forEach((l) => l())
+}
+
 export const getRateLimit = () => current
 
 export function subscribeRateLimit(listener: () => void) {

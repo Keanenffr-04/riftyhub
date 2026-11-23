@@ -1,5 +1,11 @@
 # Changelog
 
+## v10.0.0 – Request limit and Lighthouse audit
+- Optional GitHub token (Settings → "GitHub token"): raises the limit from 60 to 5,000 requests per hour and search from 10 to 30 per minute. The token is checked with GitHub before it is saved, stored only in this browser, sent only to api.github.com, never included in backups, and can be removed at any time. The sidebar meter and rate-limit messages reflect whether a token is in use, and a rejected or expired token shows a clear message with a link to Settings (new error kind "auth")
+- Lighthouse audit and fixes (static audit; see notes below): placeholder text contrast raised from 3.5:1 to 6.7:1 and the primary button hover from 4.2:1 to 5.1:1 (WCAG AA needs 4.5:1), Not Found page now has a page heading, the sidebar navigation is labelled, secondary avatars load lazily, `<noscript>` message, description, `color-scheme` and Open Graph meta tags, preconnect to GitHub's API and avatar hosts, web app manifest with PNG icons, Apple touch icon, `robots.txt`
+- Best practices: `netlify.toml` now sets a Content-Security-Policy (scripts only from the site itself, requests only to api.github.com, images only from the site and GitHub avatars), `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy`, and long-term caching for the hashed files in `/assets`
+- No new dependencies. Not done: the audit was made by reading the code and measuring colour contrast, and the build could not be run in the sandbox that prepared this version. Run `npm run build` and a Lighthouse report in Chrome (DevTools → Lighthouse, against `npm run preview`) and send the scores so the remaining findings go into v11
+
 ## v9.0.0 – Performance and reliability
 - API and caching: repository pages now load in parallel (the profile's repository count says how many pages exist), repositories are slimmed to the fields the app uses (about 90% smaller in memory and storage), expired and old-format cache entries are removed on start, and the soonest-expiring entries are evicted when browser storage is full
 - Requests: 15-second timeout, up to two automatic retries (with a short pause) for network failures and GitHub server errors, no retries for not-found or rate-limit errors, and no requests are sent once the quota is known to be used up (search keeps its own quota)

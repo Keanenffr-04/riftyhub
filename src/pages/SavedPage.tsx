@@ -165,7 +165,7 @@ export default function SavedPage() {
                       <span className="sr-only">Select @{p.login} for comparison</span>
                     </label>
                     <Link to={`/u/${encodeURIComponent(p.login)}`} className="saved-link">
-                      <img src={p.avatar_url} alt="" width={48} height={48} />
+                      <img src={p.avatar_url} alt="" width={48} height={48} loading="lazy" decoding="async" />
                       <span>
                         <strong>{p.name ?? p.login}</strong>
                         <span className="muted">@{p.login}</span>

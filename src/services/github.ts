@@ -3,13 +3,14 @@ import { mapEvent, type RawEvent } from '../utils/events'
 import { cached } from './cache'
 import { slimRepo } from '../utils/slim'
 import { getRateLimit, setRateLimit } from './rateLimit'
+import { getToken } from './token'
 
 const API_BASE = 'https://api.github.com'
 const PER_PAGE = 100
 /** Safety cap: 3 pages × 100 = 300 repositories per profile. */
 export const MAX_REPO_PAGES = 3
 
-export type GitHubErrorKind = 'invalid' | 'not_found' | 'rate_limit' | 'network' | 'server' | 'unknown'
+export type GitHubErrorKind = 'invalid' | 'not_found' | 'rate_limit' | 'auth' | 'network' | 'server' | 'unknown'
 
 export class GitHubError extends Error {
   kind: GitHubErrorKind
@@ -58,7 +59,10 @@ async function requestOnce<T>(path: string): Promise<T> {
   try {
     let res: Response
     try {
-      res = await fetch(`${API_BASE}${path}`, { headers: { Accept: 'application/vnd.github+json' }, signal: controller.signal })
+      const token = getToken()
+      const headers: Record<string, string> = { Accept: 'application/vnd.github+json' }
+      if (token) headers.Authorization = `Bearer ${token}`
+      res = await fetch(`${API_BASE}${path}`, { headers, signal: controller.signal })
     } catch {
       throw new GitHubError(
         'network',
@@ -83,6 +87,10 @@ async function requestOnce<T>(path: string): Promise<T> {
           ? new GitHubError('network', 'GitHub took too long to respond. Try again in a moment.')
           : new GitHubError('unknown', 'GitHub sent a response that could not be read.')
       }
+    }
+
+    if (res.status === 401) {
+      throw new GitHubError('auth', 'GitHub did not accept the token saved in Settings. It may have expired or been revoked.')
     }
 
     if (res.status === 404) throw new GitHubError('not_found', 'User not found.')
@@ -261,4 +269,26 @@ export function searchCommits(username: string, query: CommitQuery, page = 1, fo
     },
     { force },
   )
+}
+
+export type TokenCheck = { ok: true; limit: number } | { ok: false; reason: 'rejected' | 'network' }
+
+/** Tests a token against GitHub's free /rate_limit endpoint (it does not use up any quota). */
+export async function checkToken(token: string): Promise<TokenCheck> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  try {
+    const res = await fetch(`${API_BASE}/rate_limit`, {
+      headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+    if (res.status === 401) return { ok: false, reason: 'rejected' }
+    if (!res.ok) return { ok: false, reason: 'network' }
+    const limit = Number(res.headers.get('x-ratelimit-limit'))
+    return { ok: true, limit: Number.isFinite(limit) && limit > 0 ? limit : 0 }
+  } catch {
+    return { ok: false, reason: 'network' }
+  } finally {
+    clearTimeout(timer)
+  }
 }

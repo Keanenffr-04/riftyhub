@@ -63,10 +63,11 @@ npm run preview
 - Saved profiles: favourites, named collections, search, sorting and "Compare selected" for any two saved developers
 - Developer comparison: tally of who leads, 11 metrics, language overlap, most starred repositories, swap button, and a Compare button on every profile
 - Activity page: public event timeline with filters, daily activity chart and a commit explorer (search messages, filter by repository and date)
-- Saved profiles (browser storage)
+- Optional GitHub token (Settings) to raise the request limit from 60 to 5,000 per hour, kept only in your browser
+- Accessibility and best-practice fixes from a Lighthouse-style audit: readable contrast, labelled navigation, security headers, web app manifest
 
 ## Notes
-- Uses unauthenticated GitHub API requests (60/hour per IP). No tokens are stored or sent.
+- Uses unauthenticated GitHub API requests (60/hour per IP) unless you add a token in Settings (5,000/hour). A token is stored only in this browser (localStorage), sent only to api.github.com and never included in backups.
 - Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch. Temporary failures are retried automatically and requests time out after 15 seconds.
 - Saved profiles, collections and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
 - Shows up to 300 public repositories per user.

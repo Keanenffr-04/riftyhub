@@ -2,14 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="RiftyHub – explore any GitHub developer's profile and public repositories." />
-    <meta name="theme-color" content="#0c0c10" />
     <title>RiftyHub</title>
+    <meta name="description" content="RiftyHub – explore any GitHub developer's profile, repositories, analytics and activity." />
+    <meta name="theme-color" content="#0c0c10" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="RiftyHub" />
+    <meta property="og:description" content="Explore any GitHub developer's profile, repositories, analytics and activity." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preconnect" href="https://api.github.com" />
+    <link rel="preconnect" href="https://avatars.githubusercontent.com" />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>RiftyHub needs JavaScript to load live GitHub data. Please enable it and reload.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

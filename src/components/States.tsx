@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { AlertTriangle, RefreshCw, SearchX } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { GitHubError } from '../services/github'
+import { getToken } from '../services/token'
 
 export function PageSkeleton() {
   return (
@@ -60,9 +61,14 @@ export function describeError(error: GitHubError, subject: string) {
       const when = error.resetAt
         ? ` You can try again at ${error.resetAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
         : ''
-      body = `GitHub limits unauthenticated requests.${when}`
+      body = `${getToken() ? 'GitHub limits how many requests a token can make.' : 'GitHub limits unauthenticated requests. Adding a free token in Settings raises the limit.'}${when}`
       break
     }
+    case 'auth':
+      title = 'GitHub rejected your token'
+      body = 'The token saved in Settings is no longer valid. Remove or replace it there to continue.'
+      canRetry = false
+      break
     case 'network':
       title = 'Can’t reach GitHub'
       break
@@ -95,6 +101,11 @@ export function ErrorState({ error, username, onRetry }: ErrorProps) {
             <RefreshCw size={15} /> Try again
           </button>
         )}
+        {error.kind === 'auth' && (
+          <Link className="btn btn-primary" to="/settings">
+            Open Settings
+          </Link>
+        )}
         <Link className="btn" to="/">
           Back to search
         </Link>
@@ -107,15 +118,18 @@ interface EmptyProps {
   title: string
   body: string
   children?: ReactNode
+  /** Heading level; the Not Found page uses 1 because it has no other page heading. */
+  level?: 1 | 2
 }
 
-export function EmptyState({ title, body, children }: EmptyProps) {
+export function EmptyState({ title, body, children, level = 2 }: EmptyProps) {
+  const Heading = level === 1 ? 'h1' : 'h2'
   return (
     <div className="card state">
       <div className="state-icon">
         <SearchX size={26} />
       </div>
-      <h2>{title}</h2>
+      <Heading>{title}</Heading>
       <p>{body}</p>
       {children && <div className="state-actions">{children}</div>}
     </div>
