@@ -674,3 +674,10 @@ a.tab:hover { color: var(--text); }
 .refresh-note-btn { padding: 4px 10px; font-size: 13px; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Per-repository activity (v16) ---------- */
+.repo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.repo-actions a.langs-toggle { margin-left: 0; text-decoration: none; }
+.repo-head { display: flex; flex-direction: column; gap: 6px; }
+.repo-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; font-size: 13.5px; color: var(--muted); }

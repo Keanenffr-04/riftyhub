@@ -147,6 +147,12 @@ export function peekUserData(username: string): { data: UserData; fresh: boolean
   }
 }
 
+/** A developer's public events as last stored, even if past their normal lifetime, without making any request. */
+export function peekUserEvents(username: string): { events: ActivityEvent[]; fresh: boolean; storedAt: number } | undefined {
+  const hit = peek<ActivityEvent[]>(key('events', username))
+  return hit ? { events: hit.value, fresh: hit.fresh, storedAt: hit.storedAt } : undefined
+}
+
 async function fetchRepoPage(username: string, page: number): Promise<GitHubRepo[]> {
   const batch = await request<GitHubRepo[]>(
     `/users/${encodeURIComponent(username)}/repos?type=owner&sort=pushed&direction=desc&per_page=${PER_PAGE}&page=${page}`,

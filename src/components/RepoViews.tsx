@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
-import { ArrowDown, ArrowUp, BarChart3, ChevronsUpDown, ExternalLink, GitFork, Pin, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Activity, ArrowDown, ArrowUp, BarChart3, ChevronsUpDown, ExternalLink, GitFork, Pin, Star } from 'lucide-react'
 import type { GitHubRepo } from '../types/github'
 import RepoLanguages from './RepoLanguages'
 import type { SortDir, SortKey } from '../utils/repoFilters'
@@ -35,6 +36,16 @@ function LanguagesToggle({ name, open, panelId, onToggle }: { name: string; open
     <button type="button" className={`langs-toggle${open ? ' on' : ''}`} onClick={onToggle} aria-expanded={open} aria-controls={panelId} title="Show the language breakdown">
       <BarChart3 size={14} aria-hidden="true" /> Languages<span className="sr-only"> of {name}</span>
     </button>
+  )
+}
+
+/** Link to the page with this repository's recent activity. */
+function ActivityLink({ repo }: { repo: GitHubRepo }) {
+  const [owner, name] = repo.full_name.split('/')
+  return (
+    <Link className="langs-toggle" to={`/u/${encodeURIComponent(owner)}/repos/${encodeURIComponent(name)}`} title="Show this repository's recent activity">
+      <Activity size={14} aria-hidden="true" /> Activity<span className="sr-only"> of {repo.name}</span>
+    </Link>
   )
 }
 
@@ -84,8 +95,9 @@ export function RepoCard({ repo, onTopic, pinned = false, onTogglePin }: CardPro
         </span>
         <span className="muted updated">Updated {timeAgo(repo.pushed_at ?? repo.updated_at)}</span>
       </footer>
-      <div>
+      <div className="repo-actions">
         <LanguagesToggle name={repo.name} open={showLanguages} panelId={panelId} onToggle={() => setShowLanguages((v) => !v)} />
+        <ActivityLink repo={repo} />
       </div>
       {showLanguages && (
         <div id={panelId}>
@@ -140,8 +152,9 @@ function RepoRow({ repo, pinned, onTogglePin }: RowProps) {
         </td>
         <td>
           <Language language={repo.language} />
-          <div>
+          <div className="repo-actions">
             <LanguagesToggle name={repo.name} open={showLanguages} panelId={panelId} onToggle={() => setShowLanguages((v) => !v)} />
+            <ActivityLink repo={repo} />
           </div>
         </td>
         <td className="num">{formatCompact(repo.stargazers_count)}</td>

@@ -1,14 +1,18 @@
 import { Loader2, RefreshCw } from 'lucide-react'
-import type { LoadState } from '../hooks/useGitHubData'
+import type { GitHubError } from '../services/github'
 import { timeAgo } from '../utils/format'
 
-type Success = Extract<LoadState, { status: 'success' }>
+/** The two flags the data hooks set while saved data is on screen. */
+export interface RefreshInfo {
+  refreshing?: boolean
+  stale?: { storedAt: number; error: GitHubError }
+}
 
 /**
  * A quiet note shown above a profile while saved data is on screen: either a newer copy is being
  * fetched in the background, or that refresh failed and the saved copy is what you are looking at.
  */
-export default function RefreshNote({ state, onRetry }: { state: Success; onRetry: () => void }) {
+export default function RefreshNote({ state, onRetry }: { state: RefreshInfo; onRetry?: () => void }) {
   if (state.refreshing) {
     return (
       <p className="refresh-note" role="status">
@@ -28,9 +32,11 @@ export default function RefreshNote({ state, onRetry }: { state: Success; onRetr
         <span>
           Couldn’t update: {reason}. Showing data saved {timeAgo(new Date(state.stale.storedAt).toISOString())}.
         </span>
-        <button type="button" className="btn refresh-note-btn" onClick={onRetry}>
-          <RefreshCw size={14} aria-hidden="true" /> Try again
-        </button>
+        {onRetry && (
+          <button type="button" className="btn refresh-note-btn" onClick={onRetry}>
+            <RefreshCw size={14} aria-hidden="true" /> Try again
+          </button>
+        )}
       </p>
     )
   }

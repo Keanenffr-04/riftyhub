@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Activity, ArrowLeftRight, Plus, X } from 'lucide-react'
 import { useCompare } from '../hooks/useCompare'
 import LanguageBars from '../components/LanguageBars'
+import RefreshNote from '../components/RefreshNote'
 import { describeError } from '../components/States'
 import { computeAnalytics, type Analytics } from '../utils/analytics'
 import { COMPARE_KEYS, MAX_COMPARE, buildCompareParams, languageOverlap, parseCompare, tallyLeads, topIndices } from '../utils/compare'
@@ -74,6 +75,7 @@ function Results({ users }: { users: string[] }) {
 
   return (
     <div className="stack">
+      <RefreshNote state={state} />
       <p className="card compare-summary" aria-live="polite">
         {sides.map((s, i) => (
           <span key={s.user.login}>

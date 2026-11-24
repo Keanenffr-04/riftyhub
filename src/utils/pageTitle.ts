@@ -13,6 +13,8 @@ const decode = (s: string) => {
 export function pageTitle(pathname: string): string {
   const parts = pathname.split('/').filter(Boolean)
   if (parts[0] === 'u' && parts[1]) {
+    // A single repository's page: "Activity of repo · owner · RiftyHub".
+    if (parts[2] === 'repos' && parts[3]) return [`Activity of ${decode(parts[3])}`, decode(parts[1]), 'RiftyHub'].join(' · ')
     return [SECTIONS[parts[2] ?? ''], decode(parts[1]), 'RiftyHub'].filter(Boolean).join(' · ')
   }
   const page = PAGES[parts[0] ?? '']

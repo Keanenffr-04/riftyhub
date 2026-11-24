@@ -14,6 +14,7 @@ import NotFoundPage from './pages/NotFoundPage'
 // The charting library is large, so the two pages that use it are downloaded only when opened.
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
 const ActivityPage = lazy(() => import('./pages/ActivityPage'))
+const RepoActivityPage = lazy(() => import('./pages/RepoActivityPage'))
 
 export default function App() {
   return (
@@ -23,6 +24,14 @@ export default function App() {
         <Route path="u/:username" element={<UserLayout />}>
           <Route index element={<OverviewPage />} />
           <Route path="repos" element={<RepositoriesPage />} />
+          <Route
+            path="repos/:repo"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <RepoActivityPage />
+              </Suspense>
+            }
+          />
           <Route
             path="analytics"
             element={

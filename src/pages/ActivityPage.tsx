@@ -1,26 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Activity as ActivityIcon, CircleDot, ExternalLink, FolderPlus, GitCommitHorizontal, GitFork, GitPullRequest, MessageSquare, RefreshCw, Rocket, Star, type LucideIcon } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
 import { useUserEvents } from '../hooks/useUserEvents'
 import { ActivityChart } from '../components/Charts'
 import CommitExplorer from '../components/CommitExplorer'
+import EventTimeline from '../components/EventTimeline'
+import RefreshNote from '../components/RefreshNote'
 import { describeError } from '../components/States'
 import { KIND_FILTERS, eventsByDay, groupByDay, summarizeActivity } from '../utils/activity'
 import { formatNumber } from '../utils/format'
 import type { ActivityKind } from '../types/github'
-
-const KIND_ICONS: Record<ActivityKind, LucideIcon> = {
-  push: GitCommitHorizontal,
-  pull_request: GitPullRequest,
-  issue: CircleDot,
-  review: MessageSquare,
-  comment: MessageSquare,
-  create: FolderPlus,
-  fork: GitFork,
-  star: Star,
-  release: Rocket,
-  other: ActivityIcon,
-}
 
 const PAGE = 40
 
@@ -78,6 +67,8 @@ export default function ActivityPage() {
         </div>
       )}
 
+      {state.status === 'success' && <RefreshNote state={state} onRetry={retry} />}
+
       {state.status === 'success' && events.length === 0 && (
         <p className="muted">GitHub has no public activity from the last 90 days for @{user.login}.</p>
       )}
@@ -134,36 +125,7 @@ export default function ActivityPage() {
             {filtered.length === 0 ? (
               <p className="muted">No events match these filters.</p>
             ) : (
-              <div className="timeline">
-                {groups.map((g) => (
-                  <div key={g.key} className="timeline-day">
-                    <h3>{g.label}</h3>
-                    <ul className="card commit-list">
-                      {g.events.map((e) => {
-                        const Icon = KIND_ICONS[e.kind]
-                        return (
-                          <li key={e.id}>
-                            <Icon size={16} aria-hidden="true" className="commit-icon" />
-                            <div className="commit-main">
-                              {e.url ? (
-                                <a href={e.url} target="_blank" rel="noopener noreferrer" className="commit-msg">
-                                  {e.title} <ExternalLink size={12} aria-hidden="true" />
-                                </a>
-                              ) : (
-                                <span className="commit-msg">{e.title}</span>
-                              )}
-                              <span className="muted">{e.repo}</span>
-                            </div>
-                            <time className="muted nowrap" dateTime={e.createdAt}>
-                              {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </time>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <EventTimeline groups={groups} />
             )}
 
             {filtered.length > shown && (

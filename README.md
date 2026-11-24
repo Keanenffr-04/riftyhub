@@ -66,7 +66,8 @@ npm run preview
 - Per-repository language breakdown: a "Languages" button on every repository card and table row shows real code size per language (one request, only when opened)
 - Saved profiles: favourites, named collections, private notes, search, sorting and "Compare selected" for two to four saved developers
 - Settings: "Clear cached GitHub data" to force fresh data on the next visit
-- Instant revisits: profiles you opened earlier open immediately from saved data and update quietly in the background
+- Instant revisits: profiles, activity and comparisons you opened earlier open immediately from saved data and update quietly in the background
+- Per-repository activity page (from the "Activity" link on any repository): tiles, daily chart and timeline of the developer's public events in that repository
 - Automated tests (`npm test`) for the cache and the main helper modules
 - Developer comparison: two to four developers side by side with a tally of who leads, 11 metrics, language overlap, most starred repositories, and a Compare button on every profile
 - Activity comparison (on demand): events per week for the last 13 weeks as a line chart, plus a table of events, commits, pull requests, reviews, active days and busiest week

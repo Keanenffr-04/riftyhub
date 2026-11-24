@@ -38,8 +38,9 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 8. In the **Table** layout, click a column heading (Repository, Stars, Forks, Updated) to sort by it, and click again to reverse. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
 9. The address bar keeps your filters, so you can bookmark or share the filtered page.
 10. **Pinning:** click the pin button on a repository (card or table row) to pin it to the Overview, and click it again to unpin. You can pin up to six per developer.
-11. **Languages of one repository:** click **Languages** on a card or table row to see a bar chart of the code in that repository, by language. It uses one GitHub request, only when you open it, and the result is kept for 30 minutes. Click the button again to close it.
-12. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
+11. **Activity in one repository:** click **Activity** on a card or table row to open that repository's page: how many public events, commits pushed, pull requests, issues and reviews you (the developer) had there, a chart per day and a timeline. It only shows the developer's own public events from the last 90 days (up to 300 across all repositories), so "nothing found" means nothing recent, not that the repository was never active.
+12. **Languages of one repository:** click **Languages** on a card or table row to see a bar chart of the code in that repository, by language. It uses one GitHub request, only when you open it, and the result is kept for 30 minutes. Click the button again to close it.
+13. **Presets:** set up a search you use often, click **Save current view**, name it, and click its name next time to apply it. The ✕ on a preset deletes it. Presets are saved in this browser and included in backups.
 
 ### 5. Read the Analytics
 1. Click the **Analytics** tab.

@@ -62,11 +62,21 @@ export function summarizeActivity(events: ActivityEvent[]): ActivitySummary {
   }
 }
 
-/** Events per day from the oldest loaded event (at most `maxDays` back) up to today. */
-export function eventsByDay(events: ActivityEvent[], maxDays = 90, today = new Date()): MonthBucket[] {
+/** The events that happened in one repository (full name such as "owner/name", any letter case). */
+export function repoEvents(events: ActivityEvent[], fullName: string): ActivityEvent[] {
+  const wanted = fullName.toLowerCase()
+  return events.filter((e) => e.repo.toLowerCase() === wanted)
+}
+
+/**
+ * Events per day from the oldest loaded event (at most `maxDays` back) up to today.
+ * `since` (a timestamp) starts the chart earlier, e.g. at the oldest event of ALL repositories, so that a
+ * single repository's chart covers the same span as the developer's whole activity.
+ */
+export function eventsByDay(events: ActivityEvent[], maxDays = 90, today = new Date(), since?: number): MonthBucket[] {
   if (events.length === 0) return []
   const counts = new Map<string, number>()
-  let oldest = today.getTime()
+  let oldest = since !== undefined && since < today.getTime() ? since : today.getTime()
   for (const e of events) {
     const t = Date.parse(e.createdAt)
     if (t < oldest) oldest = t
