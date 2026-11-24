@@ -30,7 +30,7 @@ Requires Node.js 18+. Run all commands from the project root (the folder contain
 | `npm install` | Downloads every package listed in `package.json` into `node_modules/`. | Once after cloning or unzipping the project, and again any time `package.json` changes (e.g. after pulling a new version that adds or upgrades a dependency). |
 | `npm run dev` | Starts the Vite dev server at http://localhost:5173 with hot reload: edits show in the browser instantly. | Every time you sit down to work on the app. Leave it running; stop it with `Ctrl+C`. |
 | `npm run build` | Type-checks the code with TypeScript (`tsc --noEmit`), then creates an optimised production build in `dist/`. Fails if there are type errors. | Before deploying, and before committing bigger changes, to confirm nothing is broken. Netlify runs this automatically on deploy. |
-| `npm test` | Runs the automated tests in `tests/` with Vitest (cache, username checks, comparison helpers, pins, search operators, repository filters, saved profiles and backups, language trends, the GitHub request layer with a fake `fetch`). | After changing helpers or the cache, and before committing. Needs `npm install` first. |
+| `npm test` | Runs the automated tests in `tests/` with Vitest (cache, username checks, comparison helpers, pins, search operators, repository filters, saved profiles and backups, language trends, CSV export, the GitHub request layer with a fake `fetch`). | After changing helpers or the cache, and before committing. Needs `npm install` first. |
 | `npm run preview` | Serves the built `dist/` folder locally at http://localhost:4173 so you can test the real production output. | After `npm run build`, to check the production version before it goes live. It does not rebuild, so re-run `build` after any code change. |
 
 ### Typical workflows
@@ -60,6 +60,7 @@ npm run preview
 - Filters are stored in the URL, so a filtered view can be bookmarked or shared
 - Analytics: totals, developer insights (median stars, recent activity, license coverage), interactive charts (rank repositories by stars, forks or issues; activity by creation year or last push), topic and license breakdowns
 - Language statistics by repository count (forks optional, repositories without a language reported) or by real code size, loaded on demand from GitHub
+- Export CSV: a button on the Repositories page downloads the repositories matching the current search, filters and sort as a spreadsheet-ready file (16 columns, formula-safe)
 - Language trends: a stacked chart of the languages projects were started in, year by year, as shares or counts, with a table of the numbers
 - Performance and reliability: parallel repository loading, slimmed-down cached data, automatic cache cleanup, request timeout and retries, "Show more" paging for large repository lists, lazy-loaded chart pages, offline banner, error boundary, skip link and text alternatives for charts
 - Personalisation: Settings page to show, hide and reorder (drag and drop or arrows) Overview sections, choose a dark, light or system theme, compact or comfortable density, set the default repository layout, and export/import a backup
@@ -82,7 +83,7 @@ npm run preview
 - Uses unauthenticated GitHub API requests (60/hour per IP) unless you add a token in Settings (5,000/hour). A token is stored only in this browser (localStorage), sent only to api.github.com and never included in backups.
 - Responses are cached per browser tab: fresh for 10 minutes, then shown instantly as saved data while a new copy is fetched in the background (for up to 24 hours); use "Refresh data" to re-fetch. Temporary failures are retried automatically and requests time out after 15 seconds.
 - Saved profiles (with their notes), collections, filter presets, pinned repositories and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
-- Shows up to 300 public repositories per user at first. For developers with more, a button on the Repositories page loads the rest, up to 1,000 in all (one extra GitHub request per extra 100 repositories). Compare and the Recent activity comparison still use the first 300.
+- Shows up to 300 public repositories per user at first. For developers with more, a button on the Repositories page loads the rest, up to 1,000 in all (one extra GitHub request per extra 100 repositories); it is remembered for the rest of the browser tab session. Compare and the Recent activity comparison still use the first 300.
 - Activity (and the Compare activity section) uses GitHub's public events (up to 300 events from the last 90 days; the comparison costs up to 3 requests per developer and loads only when you click it). The commit explorer uses GitHub's commit search, which allows about 10 searches per minute without a token.
 - The code-size language breakdown uses one GitHub request per repository (up to 20 most recently pushed), so it only runs when you click "Load code-size breakdown". The per-repository "Languages" button uses one request each time a repository's breakdown is first opened (kept for 30 minutes).
 

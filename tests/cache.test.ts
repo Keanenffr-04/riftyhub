@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import './setup'
-import { STALE_WINDOW_MS, cacheEntryCount, cached, clearCache, peek, pruneStorage } from '../src/services/cache'
+import { STALE_WINDOW_MS, cacheEntryCount, cached, clearCache, forget, peek, pruneStorage } from '../src/services/cache'
 
 const TTL = 10 * 60 * 1000
 
@@ -89,5 +89,27 @@ describe('stale-while-revalidate', () => {
     expect(clearCache()).toBe(2)
     expect(cacheEntryCount()).toBe(0)
     expect(peek('a')).toBeUndefined()
+  })
+})
+
+describe('forget', () => {
+  it('removes one entry, so the next request loads again, and leaves the others', async () => {
+    const loader = vi.fn(async () => 'a')
+    await cached('one', loader)
+    await cached('two', async () => 'b')
+    forget('one')
+    expect(peek('one')).toBeUndefined()
+    expect(peek('two')?.value).toBe('b')
+    await cached('one', loader)
+    expect(loader).toHaveBeenCalledTimes(2)
+  })
+  it('also removes the copy kept in this tab\'s storage', async () => {
+    await cached('one', async () => 'a')
+    forget('one')
+    expect(cacheEntryCount()).toBe(0)
+  })
+  it('does nothing for an unknown key', () => {
+    forget('nothing-here')
+    expect(cacheEntryCount()).toBe(0)
   })
 })

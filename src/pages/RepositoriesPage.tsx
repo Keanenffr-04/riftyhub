@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, LayoutGrid, List, Save, Search, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Download, LayoutGrid, List, Save, Search, X } from 'lucide-react'
 import { useUserData } from '../components/UserLayout'
 import { usePreferences } from '../hooks/usePreferences'
 import { usePresets } from '../hooks/usePresets'
@@ -11,6 +11,8 @@ import { EmptyState } from '../components/States'
 import { MAX_REPO_PAGES } from '../services/github'
 import { extraRepoCount, extraRepoPages, MAX_ALL_REPO_PAGES } from '../utils/repoPages'
 import { baseFilters } from '../utils/preferences'
+import { repoCsvFileName, reposToCsv } from '../utils/csv'
+import { downloadText } from '../utils/download'
 import { MAX_PRESET_NAME, type FilterPreset } from '../utils/presets'
 import { parseQuery } from '../utils/searchQuery'
 import {
@@ -161,13 +163,23 @@ export default function RepositoriesPage() {
             {pinNote}
           </p>
         </div>
-        <div className="toggle" role="group" aria-label="Layout">
-          <button className={view === 'cards' ? 'active' : ''} onClick={() => setView('cards')} aria-pressed={view === 'cards'}>
-            <LayoutGrid size={15} /> Cards
+        <div className="panel-tools">
+          <button
+            className="btn"
+            onClick={() => downloadText(repoCsvFileName(user.login), reposToCsv(visible))}
+            disabled={visible.length === 0}
+            title="Download the repositories shown by the current search and filters, in the current order, as a CSV file"
+          >
+            <Download size={15} aria-hidden="true" /> Export CSV ({visible.length})
           </button>
-          <button className={view === 'table' ? 'active' : ''} onClick={() => setView('table')} aria-pressed={view === 'table'}>
-            <List size={15} /> Table
-          </button>
+          <div className="toggle" role="group" aria-label="Layout">
+            <button className={view === 'cards' ? 'active' : ''} onClick={() => setView('cards')} aria-pressed={view === 'cards'}>
+              <LayoutGrid size={15} /> Cards
+            </button>
+            <button className={view === 'table' ? 'active' : ''} onClick={() => setView('table')} aria-pressed={view === 'table'}>
+              <List size={15} /> Table
+            </button>
+          </div>
         </div>
       </div>
 

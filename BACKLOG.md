@@ -8,7 +8,7 @@ Ideas for future versions. Items are moved into a version only when it has room 
 
 ## Analytics / data
 - Compare and Recent activity comparison still stop at 300 repositories each (the profile pages can now load up to 1,000)
-- Remember that the rest of a developer's repositories were loaded when revisiting in the same tab
+- Export other lists (saved profiles, activity timeline, commit search results) and add a JSON option
 
 ## Comparison and activity
 - Per-repository activity from more than the developer's own events (e.g. all contributors' recent commits, 30-day commit counts)

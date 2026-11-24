@@ -3,7 +3,7 @@ import './setup'
 import { clearCache } from '../src/services/cache'
 import { clearRateLimit, getRateLimit } from '../src/services/rateLimit'
 import { setToken } from '../src/services/token'
-import { GitHubError, checkToken, getMoreRepos, getRepos, getUser, getUserEvents, searchCommits } from '../src/services/github'
+import { GitHubError, checkToken, forgetMoreRepos, getMoreRepos, getRepos, getUser, getUserEvents, peekMoreRepos, searchCommits } from '../src/services/github'
 
 // ---------- A fake `fetch` ----------
 
@@ -309,6 +309,38 @@ describe('the rest of the repositories', () => {
     responder = (url, n) => (n > 1 && url.includes('page=5') ? { status: 404 } : profile('ada', 450)(url, n))
     const err = (await settle(getMoreRepos('ada'))) as GitHubError
     expect(err).toBeInstanceOf(GitHubError)
+  })
+})
+
+describe('remembering the rest of the repositories', () => {
+  it('has nothing stored until they are loaded, then returns them without a request', async () => {
+    responder = profile('ada', 450)
+    expect(peekMoreRepos('ada')).toBeUndefined()
+    await getMoreRepos('ada')
+    const before = calls.length
+    const saved = peekMoreRepos('ADA')
+    expect(saved?.repos).toHaveLength(150)
+    expect(saved?.fresh).toBe(true)
+    expect(calls).toHaveLength(before)
+  })
+
+  it('still returns them once past their normal lifetime, marked as not fresh', async () => {
+    responder = profile('ada', 450)
+    await getMoreRepos('ada')
+    vi.setSystemTime(Date.now() + 11 * 60 * 1000)
+    const saved = peekMoreRepos('ada')
+    expect(saved?.repos).toHaveLength(150)
+    expect(saved?.fresh).toBe(false)
+  })
+
+  it('forgets them on request, so the next load goes to GitHub', async () => {
+    responder = profile('ada', 450)
+    await getMoreRepos('ada')
+    forgetMoreRepos('ada')
+    expect(peekMoreRepos('ada')).toBeUndefined()
+    const before = reposPages().length
+    await getMoreRepos('ada')
+    expect(reposPages().length).toBe(before + 2)
   })
 })
 

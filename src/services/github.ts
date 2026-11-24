@@ -1,6 +1,6 @@
 import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHubUser, UserData } from '../types/github'
 import { EVENT_PAGES, mapEvent, type RawEvent } from '../utils/events'
-import { cached, peek } from './cache'
+import { cached, forget, peek } from './cache'
 import { slimRepo } from '../utils/slim'
 import { MAX_ALL_REPO_PAGES, MAX_REPO_PAGES } from '../utils/repoPages'
 import { getRateLimit, setRateLimit } from './rateLimit'
@@ -196,6 +196,17 @@ export function getMoreRepos(username: string, force = false): Promise<GitHubRep
     },
     { force },
   )
+}
+
+/** The rest of a developer's repositories as last stored (even past their normal lifetime), without making any request. */
+export function peekMoreRepos(username: string): { repos: GitHubRepo[]; fresh: boolean; storedAt: number } | undefined {
+  const hit = peek<GitHubRepo[]>(key('repos-more', username))
+  return hit ? { repos: hit.value, fresh: hit.fresh, storedAt: hit.storedAt } : undefined
+}
+
+/** Forgets the stored rest of a developer's repositories, so the next load goes to GitHub. */
+export function forgetMoreRepos(username: string): void {
+  forget(key('repos-more', username))
 }
 
 /** Bytes of code per language for one repository (GitHub's own language detection). */

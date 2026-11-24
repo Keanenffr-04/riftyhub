@@ -158,6 +158,16 @@ export async function cached<T>(
   return promise
 }
 
+/** Removes one cached response (memory and this tab's storage), so the next request for it goes to GitHub. */
+export function forget(key: string): void {
+  memory.delete(key)
+  try {
+    sessionStorage.removeItem(PREFIX + key)
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 /** How many cached GitHub responses are currently held (memory and this tab's storage), fresh or stale, not counting ones past the stale window. */
 export function cacheEntryCount(): number {
   const now = Date.now()
