@@ -69,5 +69,5 @@ export function useGitHubData(username: string) {
     setAttempt((n) => n + 1)
   }, [])
 
-  return { state, retry }
+  return { state, retry, attempt }
 }

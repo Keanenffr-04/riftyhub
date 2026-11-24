@@ -52,7 +52,7 @@ export default function RepoActivityPage() {
         {crumbs}
         <div className="card inline-error" role="alert">
           <p>
-            <strong>No repository named “{name}” for @{user.login}.</strong> It may have been renamed or deleted, or be one of the repositories beyond the 300 RiftyHub loads for each developer.
+            <strong>No repository named “{name}” for @{user.login}.</strong> It may have been renamed or deleted, or be one of the repositories RiftyHub has not loaded (it loads 300 at first; the Repositories page can load more).
           </p>
           <Link className="btn" to={`/u/${encodeURIComponent(user.login)}/repos`}>
             Back to repositories

@@ -41,8 +41,18 @@ export interface UserData {
   repos: GitHubRepo[]
 }
 
+/** Progress of the "load the rest of the repositories" button (beyond the first 300). */
+export type MoreReposState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'done' }
+
 export interface UserContext extends UserData {
   refresh: () => void
+  moreRepos: MoreReposState
+  /** Loads the repositories beyond the first 300 (up to 1,000 in all) and adds them to `repos`. */
+  loadMoreRepos: () => void
 }
 
 export interface GitHubCommit {

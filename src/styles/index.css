@@ -172,6 +172,10 @@ a.nav-link:hover { background: var(--raised); color: var(--text); }
   color: var(--accent-text-strong); font-size: 14px;
 }
 
+/* A notice with a button beside the text (v20) */
+.notice-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.notice-row .btn { padding: 4px 12px; font-size: 13.5px; }
+
 /* ---------- Search ---------- */
 .search { flex: 1; max-width: 520px; }
 .search-field {

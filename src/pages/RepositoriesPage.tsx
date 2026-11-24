@@ -9,6 +9,7 @@ import { MAX_PINS } from '../utils/pins'
 import { RepoCard, RepoTable } from '../components/RepoViews'
 import { EmptyState } from '../components/States'
 import { MAX_REPO_PAGES } from '../services/github'
+import { extraRepoCount, extraRepoPages, MAX_ALL_REPO_PAGES } from '../utils/repoPages'
 import { baseFilters } from '../utils/preferences'
 import { MAX_PRESET_NAME, type FilterPreset } from '../utils/presets'
 import { parseQuery } from '../utils/searchQuery'
@@ -41,7 +42,7 @@ interface Chip {
 }
 
 export default function RepositoriesPage() {
-  const { user, repos } = useUserData()
+  const { user, repos, moreRepos, loadMoreRepos } = useUserData()
   const [params, setParams] = useSearchParams()
   const { preferences } = usePreferences()
   const [view, setView] = useState<View>(preferences.repoView)
@@ -121,6 +122,8 @@ export default function RepositoriesPage() {
 
   const limit = MAX_REPO_PAGES * 100
   const truncated = user.public_repos > repos.length && repos.length >= limit
+  const extraPages = extraRepoPages(user.public_repos)
+  const canLoadMore = moreRepos.status !== 'done' && extraPages > 0
 
   const options = useMemo(() => collectOptions(repos), [repos])
   const visible = useMemo(() => applyFilters(repos, filters), [repos, filters])
@@ -340,9 +343,22 @@ export default function RepositoriesPage() {
       </div>
 
       {truncated && (
-        <p className="notice">
-          Showing the first {limit} of {user.public_repos} repositories.
-        </p>
+        <div className="notice notice-row">
+          <span role="status" aria-live="polite">
+            Showing the {repos.length} most recently pushed of {user.public_repos} repositories.
+            {!canLoadMore && repos.length >= MAX_ALL_REPO_PAGES * 100 && ` RiftyHub loads at most ${MAX_ALL_REPO_PAGES * 100}.`}
+            {moreRepos.status === 'error' && ` ${moreRepos.message}`}
+          </span>
+          {canLoadMore && (
+            <button className="btn" onClick={loadMoreRepos} disabled={moreRepos.status === 'loading'}>
+              {moreRepos.status === 'loading'
+                ? 'Loading…'
+                : moreRepos.status === 'error'
+                  ? 'Try again'
+                  : `Load ${extraRepoCount(user.public_repos)} more (up to ${extraPages} GitHub request${extraPages === 1 ? '' : 's'})`}
+            </button>
+          )}
+        </div>
       )}
 
       {repos.length === 0 ? (

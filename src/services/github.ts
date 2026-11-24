@@ -2,13 +2,14 @@ import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHu
 import { EVENT_PAGES, mapEvent, type RawEvent } from '../utils/events'
 import { cached, peek } from './cache'
 import { slimRepo } from '../utils/slim'
+import { MAX_ALL_REPO_PAGES, MAX_REPO_PAGES } from '../utils/repoPages'
 import { getRateLimit, setRateLimit } from './rateLimit'
 import { getToken } from './token'
 
 const API_BASE = 'https://api.github.com'
 const PER_PAGE = 100
-/** Safety cap: 3 pages × 100 = 300 repositories per profile. */
-export const MAX_REPO_PAGES = 3
+/** Safety cap: 3 pages × 100 = 300 repositories are loaded automatically per profile. */
+export { MAX_REPO_PAGES }
 
 export type GitHubErrorKind = 'invalid' | 'not_found' | 'rate_limit' | 'auth' | 'network' | 'server' | 'unknown'
 
@@ -174,6 +175,24 @@ export function getRepos(username: string, force = false): Promise<GitHubRepo[]>
       const pages = Math.min(MAX_REPO_PAGES, Math.ceil(user.public_repos / PER_PAGE))
       const rest = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, i) => fetchRepoPage(username, i + 2)))
       return first.concat(...rest)
+    },
+    { force },
+  )
+}
+
+/**
+ * The repositories after the first MAX_REPO_PAGES × 100, up to MAX_ALL_REPO_PAGES × 100 in all,
+ * fetched in parallel. Only asked for by the "load the rest" button; empty when there are no more.
+ */
+export function getMoreRepos(username: string, force = false): Promise<GitHubRepo[]> {
+  return cached(
+    key('repos-more', username),
+    async () => {
+      const user = await getUser(username)
+      const last = Math.min(MAX_ALL_REPO_PAGES, Math.ceil(user.public_repos / PER_PAGE))
+      const pages = Array.from({ length: Math.max(0, last - MAX_REPO_PAGES) }, (_, i) => MAX_REPO_PAGES + 1 + i)
+      const rest = await Promise.all(pages.map((page) => fetchRepoPage(username, page)))
+      return ([] as GitHubRepo[]).concat(...rest)
     },
     { force },
   )

@@ -35,7 +35,7 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 5. Change the sort and click the arrow button to reverse the order.
 6. Click a topic pill on a card to filter by that topic.
 7. Active filters appear as chips. Click a chip to remove it, or use **Clear all**.
-8. In the **Table** layout, click a column heading (Repository, Stars, Forks, Updated) to sort by it, and click again to reverse. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest.
+8. In the **Table** layout, click a column heading (Repository, Stars, Forks, Updated) to sort by it, and click again to reverse. Switch between **Cards** and **Table** at the top right. Large lists show 24 cards (or 50 rows) at a time: click **Show more** for the rest. RiftyHub loads a developer's 300 most recently pushed repositories automatically. If they have more, a notice above the list says so and offers a button (for example *Load 150 more*) that loads the rest, up to 1,000 in all; it tells you how many GitHub requests it may use. The extra repositories then count everywhere (Overview, Analytics, Activity links) until you use **Refresh data** or open another developer.
 9. The address bar keeps your filters, so you can bookmark or share the filtered page.
 10. **Pinning:** click the pin button on a repository (card or table row) to pin it to the Overview, and click it again to unpin. You can pin up to six per developer.
 11. **Activity in one repository:** click **Activity** on a card or table row to open that repository's page: how many public events, commits pushed, pull requests, issues and reviews you (the developer) had there, a chart per day and a timeline. It only shows the developer's own public events from the last 90 days (up to 300 across all repositories), so "nothing found" means nothing recent, not that the repository was never active.
@@ -138,6 +138,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | Token | `src/services/token.ts` | Keeps the optional GitHub token in this browser and adds it to requests sent to GitHub. |
 | User layout | `src/components/UserLayout.tsx` | Loads a developer once and shares it with the Overview, Repositories, Analytics and Activity pages, so switching tabs does not reload anything. |
 | Analytics helpers | `src/utils/analytics.ts` | Turns the repository list into totals, medians, language shares, topics and licenses. |
+| Repository pages | `src/utils/repoPages.ts`, `src/hooks/useMoreRepos.ts` | Work out how many repositories lie beyond the first 300 and load and merge them when you press the button. |
 | Language trends | `src/utils/languageTrends.ts` | Groups repositories by creation year and primary language for the Language trends chart (top five languages plus Other). |
 | Filter helpers | `src/utils/repoFilters.ts` | Applies the Repositories search, filters and sorting, and reads and writes them in the URL. |
 | Event helpers | `src/utils/events.ts`, `activity.ts` | Turn GitHub's raw events into readable timeline entries, daily counts and summaries. |
@@ -149,7 +150,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 
 ### How the pieces work together
 - **One load, many views.** The profile and repositories are fetched once and shared. Overview, Repositories, Analytics and Compare all calculate from the same list. Only Activity, the commit explorer and the code-size language breakdown make extra requests, because they need data the basic load doesn't include.
-- **Real data only.** All numbers come from GitHub. Where GitHub limits what it gives (300 repositories, 300 events over 90 days, 1,000 search results), the page says so.
+- **Real data only.** All numbers come from GitHub. Where GitHub limits what it gives or RiftyHub limits what it loads (300 repositories at first and 1,000 at most, 300 events over 90 days, 1,000 search results), the page says so.
 - **Heavy parts load only when needed.** The charting library is downloaded the first time you open Analytics or Activity, which keeps the first page load small.
 - **The cache protects your limit.** Because responses are remembered, moving between tabs and back costs nothing. The meter shows what's left.
 - **Your preferences shape every page.** Settings are stored in your browser and read by the Overview (which sections, in what order), the Repositories page (starting layout) and the whole app (spacing).
