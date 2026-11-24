@@ -46,9 +46,10 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 1. Click the **Analytics** tab.
 2. The top tiles show totals. **Developer insights** adds median stars, recent activity, license coverage and more.
 3. **Languages**: choose *Repository count* or *Code size*. Tick *Include forks* if you want forks counted. For *Code size*, click **Load code-size breakdown** (it uses up to 20 of your GitHub requests).
-4. **Top repositories**: switch between Stars, Forks and Issues.
-5. **Activity**: switch between repositories created per year and last push by month.
-6. **Top topics** and **Licenses** show the most common ones.
+4. **Language trends**: see which languages the developer started projects in, year by year. Switch between *Share* (each year adds up to 100%) and *Count*, tick *Include forks* to count forks too, and open **Show the numbers** for a table. Each repository is counted once, in the year it was created, under its primary language. It shows where projects were started, not how much code was written each year, and the language colours match the Languages panel (everything outside the top five is grouped as *Other*).
+5. **Top repositories**: switch between Stars, Forks and Issues.
+6. **Activity**: switch between repositories created per year and last push by month.
+7. **Top topics** and **Licenses** show the most common ones.
 
 ### 6. Follow their activity
 1. Click the **Activity** tab.
@@ -137,6 +138,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | Token | `src/services/token.ts` | Keeps the optional GitHub token in this browser and adds it to requests sent to GitHub. |
 | User layout | `src/components/UserLayout.tsx` | Loads a developer once and shares it with the Overview, Repositories, Analytics and Activity pages, so switching tabs does not reload anything. |
 | Analytics helpers | `src/utils/analytics.ts` | Turns the repository list into totals, medians, language shares, topics and licenses. |
+| Language trends | `src/utils/languageTrends.ts` | Groups repositories by creation year and primary language for the Language trends chart (top five languages plus Other). |
 | Filter helpers | `src/utils/repoFilters.ts` | Applies the Repositories search, filters and sorting, and reads and writes them in the URL. |
 | Event helpers | `src/utils/events.ts`, `activity.ts` | Turn GitHub's raw events into readable timeline entries, daily counts and summaries. |
 | Search query parser | `src/utils/searchQuery.ts` | Turns the Repositories search text into plain words plus operator conditions (stars, language, dates, and so on) and reports operators it can't understand. |

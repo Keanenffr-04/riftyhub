@@ -30,7 +30,7 @@ Requires Node.js 18+. Run all commands from the project root (the folder contain
 | `npm install` | Downloads every package listed in `package.json` into `node_modules/`. | Once after cloning or unzipping the project, and again any time `package.json` changes (e.g. after pulling a new version that adds or upgrades a dependency). |
 | `npm run dev` | Starts the Vite dev server at http://localhost:5173 with hot reload: edits show in the browser instantly. | Every time you sit down to work on the app. Leave it running; stop it with `Ctrl+C`. |
 | `npm run build` | Type-checks the code with TypeScript (`tsc --noEmit`), then creates an optimised production build in `dist/`. Fails if there are type errors. | Before deploying, and before committing bigger changes, to confirm nothing is broken. Netlify runs this automatically on deploy. |
-| `npm test` | Runs the automated tests in `tests/` with Vitest (cache, username checks, comparison helpers, pins, search operators). | After changing helpers or the cache, and before committing. Needs `npm install` first. |
+| `npm test` | Runs the automated tests in `tests/` with Vitest (cache, username checks, comparison helpers, pins, search operators, repository filters, saved profiles and backups, language trends). | After changing helpers or the cache, and before committing. Needs `npm install` first. |
 | `npm run preview` | Serves the built `dist/` folder locally at http://localhost:4173 so you can test the real production output. | After `npm run build`, to check the production version before it goes live. It does not rebuild, so re-run `build` after any code change. |
 
 ### Typical workflows
@@ -60,6 +60,7 @@ npm run preview
 - Filters are stored in the URL, so a filtered view can be bookmarked or shared
 - Analytics: totals, developer insights (median stars, recent activity, license coverage), interactive charts (rank repositories by stars, forks or issues; activity by creation year or last push), topic and license breakdowns
 - Language statistics by repository count (forks optional, repositories without a language reported) or by real code size, loaded on demand from GitHub
+- Language trends: a stacked chart of the languages projects were started in, year by year, as shares or counts, with a table of the numbers
 - Performance and reliability: parallel repository loading, slimmed-down cached data, automatic cache cleanup, request timeout and retries, "Show more" paging for large repository lists, lazy-loaded chart pages, offline banner, error boundary, skip link and text alternatives for charts
 - Personalisation: Settings page to show, hide and reorder (drag and drop or arrows) Overview sections, choose a dark, light or system theme, compact or comfortable density, set the default repository layout, and export/import a backup
 - Pinned repositories (up to six per developer) on the Overview, a sun/moon theme button, and a `/` shortcut to focus the search box

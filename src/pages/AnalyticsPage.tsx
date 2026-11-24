@@ -4,6 +4,7 @@ import { useUserData } from '../components/UserLayout'
 import { ActivityChart, METRIC_LABELS, TopReposChart, metricValue, type RepoMetric } from '../components/Charts'
 import LanguageBars from '../components/LanguageBars'
 import LanguagePanel from '../components/LanguagePanel'
+import LanguageTrendsPanel from '../components/LanguageTrendsPanel'
 import { EmptyState } from '../components/States'
 import { computeAnalytics } from '../utils/analytics'
 import { formatNumber } from '../utils/format'
@@ -89,6 +90,8 @@ export default function AnalyticsPage() {
       )}
 
       <LanguagePanel repos={repos} />
+
+      <LanguageTrendsPanel repos={repos} />
 
       <section className="card panel" aria-labelledby="top-heading">
         <div className="panel-head">

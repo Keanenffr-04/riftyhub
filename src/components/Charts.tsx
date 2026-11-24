@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { GitHubRepo } from '../types/github'
 import type { LanguageStat, MonthBucket } from '../utils/analytics'
+import { yearShare, type LanguageTrends } from '../utils/languageTrends'
 import { useChartPalette } from '../hooks/useTheme'
 import type { ChartPalette } from '../utils/theme'
 
@@ -199,6 +200,51 @@ export function WeeklyCompareChart({ labels, series, ariaLabel }: { labels: stri
             />
           ))}
         </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export type TrendMode = 'share' | 'count'
+
+/** Stacked bars per creation year: each year's repositories split by primary language. */
+export function LanguageTrendChart({ trends, mode, ariaLabel }: { trends: LanguageTrends; mode: TrendMode; ariaLabel: string }) {
+  const c = useChartPalette()
+  const domain: [number, number | 'auto'] = mode === 'share' ? [0, 100] : [0, 'auto']
+  // Each language is keyed by position (s0, s1, …) so a language name can never clash with the "label" key.
+  const data = trends.years.map((label, y) => {
+    const row: Record<string, string | number> = { label, total: trends.totals[y] }
+    trends.series.forEach((s, i) => {
+      row[`s${i}`] = mode === 'share' ? Math.round(yearShare(trends, i, y) * 10) / 10 : s.counts[y]
+    })
+    return row
+  })
+
+  return (
+    <div className="chart-box short" role="img" aria-label={ariaLabel}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ left: -12, right: 8 }}>
+          <CartesianGrid stroke={c.grid} vertical={false} />
+          <XAxis dataKey="label" stroke={c.axis} tick={{ fill: c.axis, fontSize: 12 }} interval="preserveStartEnd" />
+          <YAxis
+            stroke={c.axis}
+            tick={{ fill: c.axis, fontSize: 12 }}
+            allowDecimals={false}
+            domain={domain}
+            tickFormatter={(v: number) => (mode === 'share' ? `${v}%` : String(v))}
+          />
+          <Tooltip
+            cursor={{ fill: c.cursor }}
+            contentStyle={tooltipStyle(c)}
+            itemStyle={tooltipText(c)}
+            labelStyle={tooltipText(c)}
+            formatter={(value, name) => [mode === 'share' ? `${value}%` : `${value}`, String(name)]}
+            labelFormatter={(label) => `Created in ${label}`}
+          />
+          {trends.series.map((s, i) => (
+            <Bar key={s.name} dataKey={`s${i}`} name={s.name} stackId="languages" fill={s.color ?? c.other} isAnimationActive={false} />
+          ))}
+        </BarChart>
       </ResponsiveContainer>
     </div>
   )

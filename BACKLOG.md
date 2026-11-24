@@ -7,7 +7,6 @@ Ideas for future versions. Items are moved into a version only when it has room 
 ## Dashboard
 
 ## Analytics / data
-- Language trends over time
 - Contributions beyond the 300-repository cap
 
 ## Comparison and activity
@@ -20,4 +19,5 @@ Ideas for future versions. Items are moved into a version only when it has room 
 ## Quality
 - Fix whatever the first real Lighthouse report (run on `npm run preview`) still flags
 - Virtualised long lists
-- More automated tests: the request layer (with a fake `fetch`), saved profiles and backup import, and the React screens
+- More automated tests: the request layer (with a fake `fetch`) and the React screens
+- Language trends from real code size per year (the current chart uses each repository's primary language and its creation year)
