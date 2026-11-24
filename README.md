@@ -68,6 +68,7 @@ npm run preview
 - Settings: "Clear cached GitHub data" to force fresh data on the next visit
 - Instant revisits: profiles, activity and comparisons you opened earlier open immediately from saved data and update quietly in the background
 - Per-repository activity page (from the "Activity" link on any repository): tiles, daily chart and timeline of the developer's public events in that repository
+- Commit search shows saved results for repeated searches instantly and refreshes them in the background
 - Automatic checks: a GitHub Actions workflow runs the tests and the build on every push and pull request
 - Automated tests (`npm test`) for the cache and the main helper modules
 - Developer comparison: two to four developers side by side with a tally of who leads, 11 metrics, language overlap, most starred repositories, and a Compare button on every profile

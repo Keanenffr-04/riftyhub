@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GitHubError, MAX_COMMIT_PAGES, searchCommits, toGitHubError, type CommitQuery } from '../services/github'
+import { GitHubError, MAX_COMMIT_PAGES, peekCommitSearch, searchCommits, toGitHubError, type CommitQuery } from '../services/github'
 import type { GitHubCommit } from '../types/github'
 
 export interface CommitSearchState {
@@ -11,6 +11,10 @@ export interface CommitSearchState {
   error: GitHubError | null
   /** True while an additional page is being appended to existing results. */
   loadingMore: boolean
+  /** Set while saved results are on screen and newer ones are being fetched quietly. */
+  refreshing?: boolean
+  /** Set when saved results are on screen because the quiet refresh failed. */
+  stale?: { storedAt: number; error: GitHubError }
 }
 
 const INITIAL: CommitSearchState = { status: 'loading', commits: [], total: 0, page: 0, incomplete: false, error: null, loadingMore: false }
@@ -24,14 +28,32 @@ export function useCommitSearch(username: string, initial: CommitQuery) {
     (query: CommitQuery) => {
       const id = ++runId.current
       queryRef.current = query
-      setState(INITIAL)
-      searchCommits(username, query, 1)
+      // Saved results past their normal lifetime are shown first and refreshed in the background.
+      const found = peekCommitSearch(username, query, 1)
+      const old = found && !found.fresh ? found : undefined
+      const savedState: CommitSearchState | undefined = old && {
+        status: 'success',
+        commits: old.result.commits,
+        total: old.result.total,
+        page: 1,
+        incomplete: old.result.incomplete,
+        error: null,
+        loadingMore: false,
+      }
+      setState(savedState ? { ...savedState, refreshing: true } : INITIAL)
+      searchCommits(username, query, 1, old !== undefined)
         .then((res) => {
           if (id === runId.current)
             setState({ status: 'success', commits: res.commits, total: res.total, page: 1, incomplete: res.incomplete, error: null, loadingMore: false })
         })
         .catch((err: unknown) => {
-          if (id === runId.current) setState({ ...INITIAL, status: 'error', error: toGitHubError(err) })
+          if (id !== runId.current) return
+          const error = toGitHubError(err)
+          if (savedState && old && error.kind !== 'not_found' && error.kind !== 'invalid') {
+            setState({ ...savedState, stale: { storedAt: old.storedAt, error } })
+          } else {
+            setState({ ...INITIAL, status: 'error', error })
+          }
         })
     },
     [username],
@@ -62,5 +84,8 @@ export function useCommitSearch(username: string, initial: CommitQuery) {
 
   const canLoadMore = state.status === 'success' && state.page < MAX_COMMIT_PAGES && state.commits.length < state.total
 
-  return { state, run, loadMore, canLoadMore }
+  /** Re-runs the current search, bypassing saved results. */
+  const retry = useCallback(() => run(queryRef.current), [run])
+
+  return { state, run, loadMore, canLoadMore, retry }
 }

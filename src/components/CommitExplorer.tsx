@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { GitCommitHorizontal, Search } from 'lucide-react'
 import { useCommitSearch } from '../hooks/useCommitSearch'
 import { describeError } from './States'
+import RefreshNote from './RefreshNote'
 import { COMMIT_PAGE_SIZE, MAX_COMMIT_PAGES, type CommitQuery } from '../services/github'
 import { formatNumber, timeAgo } from '../utils/format'
 import type { GitHubRepo } from '../types/github'
@@ -20,7 +21,7 @@ export default function CommitExplorer({ username, repos }: { username: string; 
   const [text, setText] = useState('')
   const [repo, setRepo] = useState('')
   const [range, setRange] = useState<'' | '30d' | '90d' | '1y'>('')
-  const { state, run, loadMore, canLoadMore } = useCommitSearch(username, EMPTY)
+  const { state, run, loadMore, canLoadMore, retry } = useCommitSearch(username, EMPTY)
 
   const search = (e?: FormEvent) => {
     e?.preventDefault()
@@ -93,6 +94,8 @@ export default function CommitExplorer({ username, repos }: { username: string; 
           </button>
         </div>
       )}
+
+      {state.status === 'success' && <RefreshNote state={state} onRetry={retry} />}
 
       {state.status === 'success' &&
         (state.commits.length === 0 ? (

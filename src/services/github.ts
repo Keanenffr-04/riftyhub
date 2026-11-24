@@ -259,17 +259,33 @@ export interface CommitQuery {
   since: string
 }
 
-/** One page of the user's commits from GitHub's commit search, newest first. */
-export function searchCommits(username: string, query: CommitQuery, page = 1, force = false): Promise<CommitSearchResult> {
-  // Qualifier characters are removed from free text so it can only search commit messages.
+const commitSearchKey = (username: string, q: string, page: number) => key('commitsearch', `${username}:${q}:${page}`)
+
+/** Builds the encoded search string; qualifier characters are removed from free text so it can only search commit messages. */
+function commitSearchString(username: string, query: CommitQuery): string {
   const text = query.text.replace(/[:"]/g, ' ').trim()
   const parts = [text, `author:${username}`]
   if (query.repo) parts.push(`repo:${query.repo}`)
   if (query.since) parts.push(`author-date:>=${query.since}`)
-  const q = encodeURIComponent(parts.filter(Boolean).join(' '))
+  return encodeURIComponent(parts.filter(Boolean).join(' '))
+}
+
+/** A commit search page as last stored, even if past its normal lifetime, without making any request. */
+export function peekCommitSearch(
+  username: string,
+  query: CommitQuery,
+  page = 1,
+): { result: CommitSearchResult; fresh: boolean; storedAt: number } | undefined {
+  const hit = peek<CommitSearchResult>(commitSearchKey(username, commitSearchString(username, query), page))
+  return hit ? { result: hit.value, fresh: hit.fresh, storedAt: hit.storedAt } : undefined
+}
+
+/** One page of the user's commits from GitHub's commit search, newest first. */
+export function searchCommits(username: string, query: CommitQuery, page = 1, force = false): Promise<CommitSearchResult> {
+  const q = commitSearchString(username, query)
 
   return cached(
-    key('commitsearch', `${username}:${q}:${page}`),
+    commitSearchKey(username, q, page),
     async () => {
       const res = await request<CommitSearchResponse>(
         `/search/commits?q=${q}&sort=author-date&order=desc&per_page=${COMMIT_PAGE_SIZE}&page=${page}`,
