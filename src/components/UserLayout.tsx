@@ -1,6 +1,7 @@
 import { Outlet, useOutletContext, useParams } from 'react-router-dom'
 import { useGitHubData } from '../hooks/useGitHubData'
 import { ErrorState, PageSkeleton } from './States'
+import RefreshNote from './RefreshNote'
 import UserTabs from './UserTabs'
 import type { UserContext } from '../types/github'
 
@@ -13,6 +14,7 @@ export default function UserLayout() {
   const context: UserContext = { ...state.data, refresh: retry }
   return (
     <div className="user-page">
+      <RefreshNote state={state} onRetry={retry} />
       <UserTabs username={username} user={state.data.user} repoCount={state.data.repos.length} />
       <Outlet context={context} />
     </div>

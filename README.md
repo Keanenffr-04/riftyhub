@@ -30,6 +30,7 @@ Requires Node.js 18+. Run all commands from the project root (the folder contain
 | `npm install` | Downloads every package listed in `package.json` into `node_modules/`. | Once after cloning or unzipping the project, and again any time `package.json` changes (e.g. after pulling a new version that adds or upgrades a dependency). |
 | `npm run dev` | Starts the Vite dev server at http://localhost:5173 with hot reload: edits show in the browser instantly. | Every time you sit down to work on the app. Leave it running; stop it with `Ctrl+C`. |
 | `npm run build` | Type-checks the code with TypeScript (`tsc --noEmit`), then creates an optimised production build in `dist/`. Fails if there are type errors. | Before deploying, and before committing bigger changes, to confirm nothing is broken. Netlify runs this automatically on deploy. |
+| `npm test` | Runs the automated tests in `tests/` with Vitest (cache, username checks, comparison helpers, pins, search operators). | After changing helpers or the cache, and before committing. Needs `npm install` first. |
 | `npm run preview` | Serves the built `dist/` folder locally at http://localhost:4173 so you can test the real production output. | After `npm run build`, to check the production version before it goes live. It does not rebuild, so re-run `build` after any code change. |
 
 ### Typical workflows
@@ -65,6 +66,8 @@ npm run preview
 - Per-repository language breakdown: a "Languages" button on every repository card and table row shows real code size per language (one request, only when opened)
 - Saved profiles: favourites, named collections, private notes, search, sorting and "Compare selected" for two to four saved developers
 - Settings: "Clear cached GitHub data" to force fresh data on the next visit
+- Instant revisits: profiles you opened earlier open immediately from saved data and update quietly in the background
+- Automated tests (`npm test`) for the cache and the main helper modules
 - Developer comparison: two to four developers side by side with a tally of who leads, 11 metrics, language overlap, most starred repositories, and a Compare button on every profile
 - Activity comparison (on demand): events per week for the last 13 weeks as a line chart, plus a table of events, commits, pull requests, reviews, active days and busiest week
 - Activity page: public event timeline with filters, daily activity chart and a commit explorer (search messages, filter by repository and date)
@@ -73,7 +76,7 @@ npm run preview
 
 ## Notes
 - Uses unauthenticated GitHub API requests (60/hour per IP) unless you add a token in Settings (5,000/hour). A token is stored only in this browser (localStorage), sent only to api.github.com and never included in backups.
-- Responses are cached for 10 minutes per browser tab; use "Refresh data" to re-fetch. Temporary failures are retried automatically and requests time out after 15 seconds.
+- Responses are cached per browser tab: fresh for 10 minutes, then shown instantly as saved data while a new copy is fetched in the background (for up to 24 hours); use "Refresh data" to re-fetch. Temporary failures are retried automatically and requests time out after 15 seconds.
 - Saved profiles (with their notes), collections, filter presets, pinned repositories and preferences are stored in this browser (localStorage) only. Export a backup from Settings to keep a copy.
 - Shows up to 300 public repositories per user.
 - Activity (and the Compare activity section) uses GitHub's public events (up to 300 events from the last 90 days; the comparison costs up to 3 requests per developer and loads only when you click it). The commit explorer uses GitHub's commit search, which allows about 10 searches per minute without a token.

@@ -663,3 +663,14 @@ a.tab:hover { color: var(--text); }
 .series-legend li { display: inline-flex; align-items: center; gap: 8px; }
 .stack-tight { display: flex; flex-direction: column; gap: 6px; }
 .stack-tight p { margin: 0; }
+
+/* ---------- Stale-while-revalidate note (v15) ---------- */
+.refresh-note {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; padding: 8px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--raised);
+  color: var(--muted); font-size: 13.5px;
+}
+.refresh-note-warn { background: var(--warn-soft); border-color: var(--warn-border); color: var(--warn); }
+.refresh-note-btn { padding: 4px 10px; font-size: 13px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

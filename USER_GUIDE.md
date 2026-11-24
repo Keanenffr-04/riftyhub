@@ -83,7 +83,7 @@ A step-by-step guide to using RiftyHub, followed by an explanation of what every
 7. Changes apply immediately and are remembered next time.
 
 ### 10. Keep an eye on the request limit
-RiftyHub uses GitHub without a login, which allows **60 requests per hour**. The meter at the bottom of the sidebar shows how many you have left. If it runs out, wait until the reset time shown. Data is cached for 10 minutes, so revisiting a page doesn't cost extra requests. Click **Refresh data** on a profile to fetch fresh data.
+RiftyHub uses GitHub without a login, which allows **60 requests per hour**. The meter at the bottom of the sidebar shows how many you have left. If it runs out, wait until the reset time shown. Data is cached for 10 minutes, so revisiting a page doesn't cost extra requests. After 10 minutes, a profile you opened earlier in the same tab still appears instantly from saved data, with a note while RiftyHub quietly checks GitHub for updates (this does use requests). If that check fails, the saved data stays and the note explains why. Click **Refresh data** on a profile to fetch fresh data.
 
 To raise the limit to **5,000 per hour**, add a free token: on GitHub open Settings → Developer settings → Personal access tokens → Fine-grained tokens, generate a token with **no permissions** (public data is enough), then paste it into **Settings → GitHub token** in RiftyHub. The token stays in this browser only and is not part of backups. If GitHub later rejects it (for example it expired), RiftyHub says so and links to Settings so you can replace or remove it.
 
@@ -131,7 +131,7 @@ RiftyHub is a web page that runs entirely in your browser. There is no RiftyHub 
 | Part | Where | What it does |
 | --- | --- | --- |
 | GitHub service | `src/services/github.ts` | Every request to GitHub goes through here: profile, repositories, events, commit search, language bytes. It adds a 15-second timeout, retries temporary failures, stops early when your quota is used up, loads repository pages in parallel and keeps only the fields the app uses. It turns errors into clear messages. |
-| Cache | `src/services/cache.ts` | Remembers responses for 10 minutes (in the browser tab) so repeat visits are instant and don't use your request allowance. Settings can clear it on demand. Tidies itself: expired entries are removed on start, and the soonest-to-expire entries are dropped if browser storage fills up. |
+| Cache | `src/services/cache.ts` | Remembers responses (in the browser tab): fresh for 10 minutes, then kept for up to 24 hours as "saved data" that is shown instantly while a new copy loads in the background. Repeat visits are instant and fresh ones don't use your request allowance. Settings can clear it on demand. Tidies itself: entries older than 24 hours are removed on start, and the soonest-to-expire entries are dropped if browser storage fills up. |
 | Rate-limit meter | `src/services/rateLimit.ts` | Reads GitHub's rate-limit headers and feeds the sidebar meter. |
 | Token | `src/services/token.ts` | Keeps the optional GitHub token in this browser and adds it to requests sent to GitHub. |
 | User layout | `src/components/UserLayout.tsx` | Loads a developer once and shares it with the Overview, Repositories, Analytics and Activity pages, so switching tabs does not reload anything. |

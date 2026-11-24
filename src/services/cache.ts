@@ -6,14 +6,22 @@
  * are deleted, and when storage is full the entries closest to expiry are evicted to make room.
  */
 const DEFAULT_TTL_MS = 10 * 60 * 1000
-const PREFIX = 'riftyhub:v3:'
-const OLD_PREFIXES = ['riftyhub:v2:']
+const PREFIX = 'riftyhub:v4:'
+const OLD_PREFIXES = ['riftyhub:v2:', 'riftyhub:v3:']
+/** After its normal lifetime an entry is "stale": still shown instantly, but refreshed in the background. */
+export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000
 const MAX_EVICTIONS = 8
 
 interface Entry<T> {
   value: T
+  /** When the entry stops being fresh. */
   expires: number
+  /** When the entry was stored (used to say how old stale data is). */
+  storedAt: number
 }
+
+/** The entry is removed for good once it is older than this. */
+const dropAfter = (entry: { expires: number }) => entry.expires + STALE_WINDOW_MS
 
 const memory = new Map<string, Entry<unknown>>()
 const inflight = new Map<string, Promise<unknown>>()
@@ -36,12 +44,12 @@ function expiryOf(storageKey: string): number {
   }
 }
 
-/** Removes expired and old-format entries. Runs once when the app starts. */
+/** Removes entries past their stale window and old-format entries. Runs once when the app starts. */
 export function pruneStorage(): void {
   try {
     for (const k of storageKeys(OLD_PREFIXES)) sessionStorage.removeItem(k)
     const now = Date.now()
-    for (const k of storageKeys([PREFIX])) if (expiryOf(k) <= now) sessionStorage.removeItem(k)
+    for (const k of storageKeys([PREFIX])) if (dropAfter({ expires: expiryOf(k) }) <= now) sessionStorage.removeItem(k)
   } catch {
     /* storage unavailable */
   }
@@ -85,16 +93,41 @@ function writeStorage<T>(key: string, entry: Entry<T>) {
   }
 }
 
-function getCached<T>(key: string): T | undefined {
+function getEntry<T>(key: string): Entry<T> | undefined {
   let entry = memory.get(key) as Entry<T> | undefined
   if (!entry) {
     const stored = readStorage<T>(key)
-    if (stored) {
-      memory.set(key, stored)
-      entry = stored
+    if (stored && typeof stored.expires === 'number') {
+      entry = { ...stored, storedAt: typeof stored.storedAt === 'number' ? stored.storedAt : stored.expires }
+      memory.set(key, entry)
     }
   }
+  return entry
+}
+
+function getCached<T>(key: string): T | undefined {
+  const entry = getEntry<T>(key)
   return entry && entry.expires > Date.now() ? entry.value : undefined
+}
+
+export interface Peek<T> {
+  value: T
+  /** True while the entry is within its normal lifetime. */
+  fresh: boolean
+  /** When the value was stored. */
+  storedAt: number
+}
+
+/**
+ * Returns the stored value even if it has passed its normal lifetime (as long as it is within the
+ * stale window), without making any request. Used to show saved data instantly while it is refreshed.
+ */
+export function peek<T>(key: string): Peek<T> | undefined {
+  const entry = getEntry<T>(key)
+  if (!entry) return undefined
+  const now = Date.now()
+  if (dropAfter(entry) <= now) return undefined
+  return { value: entry.value, fresh: entry.expires > now, storedAt: entry.storedAt }
 }
 
 export async function cached<T>(
@@ -111,7 +144,8 @@ export async function cached<T>(
 
   const promise = loader()
     .then((value) => {
-      const entry: Entry<T> = { value, expires: Date.now() + (options.ttl ?? DEFAULT_TTL_MS) }
+      const now = Date.now()
+      const entry: Entry<T> = { value, expires: now + (options.ttl ?? DEFAULT_TTL_MS), storedAt: now }
       memory.set(key, entry)
       writeStorage(key, entry)
       return value
@@ -124,13 +158,13 @@ export async function cached<T>(
   return promise
 }
 
-/** How many cached GitHub responses are currently held (memory and this tab's storage), not counting expired ones. */
+/** How many cached GitHub responses are currently held (memory and this tab's storage), fresh or stale, not counting ones past the stale window. */
 export function cacheEntryCount(): number {
   const now = Date.now()
   const live = new Set<string>()
-  for (const [k, entry] of memory) if (entry.expires > now) live.add(k)
+  for (const [k, entry] of memory) if (dropAfter(entry) > now) live.add(k)
   try {
-    for (const k of storageKeys([PREFIX])) if (expiryOf(k) > now) live.add(k.slice(PREFIX.length))
+    for (const k of storageKeys([PREFIX])) if (dropAfter({ expires: expiryOf(k) }) > now) live.add(k.slice(PREFIX.length))
   } catch {
     /* storage unavailable */
   }

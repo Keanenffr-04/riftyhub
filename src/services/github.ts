@@ -1,6 +1,6 @@
-import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHubUser } from '../types/github'
+import type { ActivityEvent, CommitSearchResult, GitHubCommit, GitHubRepo, GitHubUser, UserData } from '../types/github'
 import { EVENT_PAGES, mapEvent, type RawEvent } from '../utils/events'
-import { cached } from './cache'
+import { cached, peek } from './cache'
 import { slimRepo } from '../utils/slim'
 import { getRateLimit, setRateLimit } from './rateLimit'
 import { getToken } from './token'
@@ -130,6 +130,21 @@ const key = (kind: string, username: string) => `${kind}:${username.toLowerCase(
 
 export function getUser(username: string, force = false): Promise<GitHubUser> {
   return cached(key('user', username), () => request<GitHubUser>(`/users/${encodeURIComponent(username)}`), { force })
+}
+
+/**
+ * A developer's profile and repositories exactly as last stored, even if past their normal lifetime,
+ * without making any request. Undefined unless both are stored.
+ */
+export function peekUserData(username: string): { data: UserData; fresh: boolean; storedAt: number } | undefined {
+  const user = peek<GitHubUser>(key('user', username))
+  const repos = peek<GitHubRepo[]>(key('repos', username))
+  if (!user || !repos) return undefined
+  return {
+    data: { user: user.value, repos: repos.value },
+    fresh: user.fresh && repos.fresh,
+    storedAt: Math.min(user.storedAt, repos.storedAt),
+  }
 }
 
 async function fetchRepoPage(username: string, page: number): Promise<GitHubRepo[]> {
