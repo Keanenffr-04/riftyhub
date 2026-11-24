@@ -188,6 +188,12 @@ export function getRepoLanguages(fullName: string, force = false): Promise<Recor
   })
 }
 
+/** A repository's language bytes as last stored, even if past their normal lifetime, without making any request. */
+export function peekRepoLanguages(fullName: string): { languages: Record<string, number>; fresh: boolean; storedAt: number } | undefined {
+  const hit = peek<Record<string, number>>(key('languages', fullName))
+  return hit ? { languages: hit.value, fresh: hit.fresh, storedAt: hit.storedAt } : undefined
+}
+
 interface CommitSearchResponse {
   total_count?: number
   incomplete_results?: boolean

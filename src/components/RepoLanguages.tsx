@@ -1,6 +1,7 @@
 import { RefreshCw } from 'lucide-react'
 import { useRepoLanguages } from '../hooks/useRepoLanguages'
 import { describeError } from './States'
+import RefreshNote from './RefreshNote'
 import LanguageBars from './LanguageBars'
 import { formatBytes } from '../utils/format'
 
@@ -44,6 +45,7 @@ export default function RepoLanguages({ fullName }: { fullName: string }) {
 
   return (
     <div className="repo-langs">
+      <RefreshNote state={state} onRetry={retry} />
       <LanguageBars languages={state.languages} limit={8} formatValue={formatBytes} />
       <p className="muted small">
         {formatBytes(state.totalBytes)} of code in total

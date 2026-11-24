@@ -19,7 +19,6 @@ Ideas for future versions. Items are moved into a version only when it has room 
 
 ## Quality
 - Fix whatever the first real Lighthouse report (run on `npm run preview`) still flags
-- Extend stale-while-revalidate to the remaining loaders (commit search, the Compare recent-activity section, per-repository languages)
+- Stale-while-revalidate for commit search (the last loader that always waits)
 - Virtualised long lists
 - More automated tests: the filter helpers, request layer (with a fake `fetch`), saved profiles and backup import, and the React screens
-- Run the tests automatically on every push (CI)

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useCompareActivity } from '../hooks/useCompareActivity'
 import { useChartPalette } from '../hooks/useTheme'
 import { describeError } from './States'
+import RefreshNote from './RefreshNote'
 import { SERIES_DASHES, WeeklyCompareChart } from './Charts'
 import { topIndices } from '../utils/compare'
 import { weekSlots, weeklyActivity, type WeeklyActivity } from '../utils/compareActivity'
@@ -37,6 +38,7 @@ export default function CompareActivity({ users }: { users: string[] }) {
 
   return (
     <div className="stack">
+      <RefreshNote state={state} />
       {failures.length > 0 && (
         <div className="stack" role="alert">
           {failures.map((f) => {
